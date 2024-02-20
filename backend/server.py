@@ -57,6 +57,7 @@ def segment_image():
             t1 = threading.Thread(target=sam.generate_image, args=(filepath, fn, ))
             t1.start()
             # Return a dictionary with the filename + unique tag for future accessibility
+            # Add the directory name to the output
             output = {
                 'started': True,
                 'filetag': tag
@@ -66,4 +67,10 @@ def segment_image():
     except Exception as e:
         return str(e)
 
-
+# {TODO} Create get request endpoint for masks (future will be segmentations)
+'''
+{
+    maskfolder: "maskfolder"
+}
+'''
+# 

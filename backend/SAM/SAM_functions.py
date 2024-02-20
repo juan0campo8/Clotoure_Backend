@@ -42,7 +42,7 @@ def generate_image(ifile, fn):
         image = cv2.imread(ifile)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         print('reading image')
-        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_b_01ec64.pth'
+        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
         model_type = "vit_b"
 
         device = "cpu"
@@ -67,6 +67,11 @@ def generate_image(ifile, fn):
             data.save(filename)
             #with open(filename, "w") as outfile: 
             #    json.dump(masks[x], outfile)
+
+        # {TODO} segment_image(maskDirectory, ifile) seperate file?
+        # maskDirectory: directory of all the segmented images
+        # ifile: image file uploaded by the user
+        # Create segmentations on original image based on masks   
         os.remove(ifile)
     except Exception as e:
         os.remove(ifile)
