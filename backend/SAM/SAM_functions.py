@@ -30,8 +30,14 @@ def show_anns(anns):
     ax.imshow(img)
 
 
-def generate_image(ifile):
+def generate_image(ifile, fn):
     try:    
+        name = fn.rsplit('.', 1)[0]
+        cwd = os.getcwd() 
+        print(cwd)
+        path = os.path.join(cwd, name)
+        print(path)
+        os.mkdir(path)
         print(ifile)
         image = cv2.imread(ifile)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -51,13 +57,17 @@ def generate_image(ifile):
         masks = mask_generator.generate(image)
 
         print('writing to file')
-        
+
+
+
         for x in range(len(masks)):
-            filename ='mask'+ str(x) + '.jpeg'
+            filename = path + r'\mask'+ str(x) + '.jpg'
+            
             data = im.fromarray(masks[x]['segmentation'])
             data.save(filename)
             #with open(filename, "w") as outfile: 
             #    json.dump(masks[x], outfile)
+        os.remove(ifile)
     except Exception as e:
         os.remove(ifile)
         print(str(e))

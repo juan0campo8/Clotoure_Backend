@@ -1,6 +1,8 @@
 import sys
 import os
 import threading
+import datetime
+import json
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import  FileStorage
 from flask import Flask, request
@@ -44,12 +46,23 @@ def segment_image():
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
         if file and allowed_file(file.filename):
+            # Add a unique tag to the file
+            tag = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            
+            #f = file.filename.rsplit('.', 1)[0] + tag
+            fn = file.filename.rsplit('.', 1)[0] + tag + '.' + file.filename.rsplit('.', 1)[1].lower()
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            t1 = threading.Thread(target=sam.generate_image, args=(filepath,))
+            t1 = threading.Thread(target=sam.generate_image, args=(filepath, fn, ))
             t1.start()
-            return "Creating Image Segmentations"
+            # Return a dictionary with the filename + unique tag for future accessibility
+            output = {
+                'started': True,
+                'filetag': tag
+                }
+            
+            return json.dumps(output)
     except Exception as e:
         return str(e)
 
