@@ -5,6 +5,7 @@ import cv2
 import sys
 import json
 import os
+import datetime as time
 from PIL import Image as im
 sys.path.append("..")
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
@@ -42,8 +43,8 @@ def generate_image(ifile, fn):
         image = cv2.imread(ifile)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         print('reading image')
-        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_b_01ec64.pth'
-        model_type = "vit_b"
+        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
+        model_type = "vit_h"
 
         device = "cpu"
         # set to "cpu"
@@ -54,9 +55,14 @@ def generate_image(ifile, fn):
         mask_generator = SamAutomaticMaskGenerator(sam)
 
         print('generating masks')
+        begin = time.datetime.now()
+        print(begin)
         masks = mask_generator.generate(image)
 
         print('writing to file')
+        end = time.datetime.now()
+        print(end)
+        print(end - begin)
 
         # updated code (Adding segmentation to the original image, allowing user to select which masks)
         mask_files = []
@@ -80,6 +86,7 @@ def generate_image(ifile, fn):
         segment_image_with_selected_masks(ifile, selected_mask_paths, path)
 
     except Exception as e:
+        os.remove(ifile)
         print(str(e))
 def segment_image_with_selected_masks(original_image_path, mask_paths, output_path):
     original_image = cv2.imread(original_image_path)
