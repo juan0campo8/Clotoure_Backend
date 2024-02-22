@@ -42,7 +42,7 @@ def generate_image(ifile, fn):
         image = cv2.imread(ifile)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         print('reading image')
-        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
+        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_b_01ec64.pth'
         model_type = "vit_b"
 
         device = "cpu"
@@ -58,23 +58,46 @@ def generate_image(ifile, fn):
 
         print('writing to file')
 
-
-
-        for x in range(len(masks)):
-            filename = path + r'\mask'+ str(x) + '.jpg'
-            
-            data = im.fromarray(masks[x]['segmentation'])
+        # updated code (Adding segmentation to the original image, allowing user to select which masks)
+        mask_files = []
+        for x, mask in enumerate(masks):
+            filename = os.path.join(path, f'mask{x}.jpg')
+            mask_files.append(filename)
+            data = im.fromarray(mask['segmentation'])
             data.save(filename)
-            #with open(filename, "w") as outfile: 
-            #    json.dump(masks[x], outfile)
+            
+        # List masks for the user
+        print("Available masks:")
+        for idx, mask_file in enumerate(mask_files):
+            print(f'{idx}: {mask_file.split(os.sep)[-1]}')
+        
+        # Prompt user for selection
+        user_input = input("Enter the numbers of the masks to apply, separated by commas (e.g., 0,2,3): ")
+        selected_indices = [int(idx) for idx in user_input.split(',')]
+        selected_mask_paths = [mask_files[idx] for idx in selected_indices]
 
-        # {TODO} segment_image(maskDirectory, ifile) seperate file?
-        # maskDirectory: directory of all the segmented images
-        # ifile: image file uploaded by the user
-        # Create segmentations on original image based on masks   
-        os.remove(ifile)
+        # Apply selected masks
+        segment_image_with_selected_masks(ifile, selected_mask_paths, path)
+
     except Exception as e:
-        os.remove(ifile)
         print(str(e))
+def segment_image_with_selected_masks(original_image_path, mask_paths, output_path):
+    original_image = cv2.imread(original_image_path)
+    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    
+    segmented_image = np.zeros_like(original_image)
+    
+    for mask_path in mask_paths:
+        mask = cv2.imread(mask_path, 0)
+        mask = mask.astype(bool)
+        
+        for i in range(3):  # For each color channel
+            segmented_image[:, :, i][mask] = original_image[:, :, i][mask]
+    
+    # Save or Display the Result
+    result_path = os.path.join(output_path, 'segmented_image.jpg')
+    cv2.imwrite(result_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
+    print(f"Segmented image saved to {result_path}")
 
-
+if __name__ == "__main__":
+    generate_image('path/to/your/image.jpg', 'filename.jpg')
