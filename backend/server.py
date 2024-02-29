@@ -74,3 +74,46 @@ def segment_image():
 }
 '''
 # 
+
+# The following endpoint needs to be tested. This uses user input for manual segmentation
+# New API request has to include input_points, input_label, input_box
+# {TODO} implement this endpoint
+
+'''
+@app.route("segment/manual", methods=["POST"])
+def manual_segmentation():
+    try:
+        ifile = request.files[file]
+        if file.filename == '':
+            print('No selected file')
+            return "No selected file"
+            # If the user does not select a file, the browser submits an
+            # empty file without a filename.
+        if file and allowed_file(file.filename):
+            data = requests.form
+            DATA = json.loads(data)
+            INPUT_POINTS = DATA['input_points']
+            INPUT_LABEL = DATA['input_label']
+            INPUT_BOX = DATA['input_box']
+
+            tag = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            
+            #f = file.filename.rsplit('.', 1)[0] + tag
+            fn = file.filename.rsplit('.', 1)[0] + tag + '.' + file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)     
+
+            t1 = threading.Thread(target=sam.generate_manual_mask, args=(filepath, fn, INPUT_POINTS, INPUT_LABEL, INPUT_BOX, ))
+
+            t1.start()
+            # Return a dictionary with the filename + unique tag for future accessibility
+            # Add the directory name to the output
+            output = {
+                'started': True,
+                'filetag': tag
+                }
+
+    except Exception as e:
+        return str(e)
+'''
