@@ -84,10 +84,10 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkPNGReader()
+    reader = vtkJPEGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkPNGReader()
+    reader2 = vtkJPEGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
