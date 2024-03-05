@@ -38,12 +38,14 @@ def get_program_parameters():
     epilogue = '''
    '''
     parser = argparse.ArgumentParser(description=description, epilog=epilogue, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('filename1', help='masonry-wide.jpg.')
-    parser.add_argument('filename2', help='tshirt.obj')
+    parser.add_argument('filename1', help='shirtfront.jpg.')
+    parser.add_argument('filename2', help='shirtback.jpg')
+    parser.add_argument('filename3', help='tshirt.obj')
     args = parser.parse_args()
     arg1 = args.filename1
     arg2 = args.filename2
-    return args.filename1, args.filename2
+    arg3 = args.filename3
+    return args.filename1, args.filename2, args.filename3
     # takes in jpg file and obj file IN THAT ORDER
     
 # def rotate_callback(key,actor): 
@@ -59,12 +61,13 @@ def get_program_parameters():
 
 def main():
     colors = vtkNamedColors()
-    jpegfile, objfile = get_program_parameters()
+    jpegfile, jpegfile2, objfile = get_program_parameters()
     
     # back_jpeg = get_program_parameters() ##implement 2nd texture reading 
     
-    #jpegfile = "./res/8k_earth_daymap.jpg"
-    #objfile  = "./obj/tshirt.obj"
+    #jpegfile  = "./res/8k_earth_daymap.jpg"
+    #jpegfile2 = "./res/BackShirt.jpg"
+    #objfile   = "./obj/tshirt.obj"
     
     # Create a render window
     ren = vtkRenderer()
@@ -80,11 +83,12 @@ def main():
     iren.SetRenderWindow(renWin)
 
     # Read the image data from a file
-    reader = vtkJPEGReader()
+    
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkJPEGReader()
-    # reader2.SetFileName()
+    reader2 = vtkPNGReader()
+    reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
     objreader = vtkOBJReader()
@@ -95,7 +99,7 @@ def main():
     texture.SetInputConnection(reader.GetOutputPort())
     
     texture2 = vtkTexture()
-    texture2.SetInputConnection(reader.GetOutputPort())  # Second texture 
+    texture2.SetInputConnection(reader2.GetOutputPort())  # Second texture 
 
     # Map texture coordinates
     
@@ -114,14 +118,14 @@ def main():
     # Create actor and set the mapper and the texture
     actor = vtkActor()
     bp = vtkProperty()
-    bp.SetColor(0,1,0)
+    bp.SetColor(colors.GetColor3d('Blue'))
     # actor.GetProperty().SetColor(colors.GetColor3d('red'))
     actor.SetMapper(mapper)
     actor.SetTexture(texture)
     actor.SetBackfaceProperty(bp)
 
     ren.AddActor(actor)
-    ren.SetBackground(colors.GetColor3d('White'))
+    ren.SetBackground(colors.GetColor3d('Red'))
     # Interactor 
     # interactorStyle = vtkInteractorStyleTrackballCamera()
     # iren.SetInteractorStyle(interactorStyle)
