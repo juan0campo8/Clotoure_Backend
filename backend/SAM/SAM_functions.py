@@ -92,19 +92,34 @@ def segment_image_with_selected_masks(original_image_path, mask_paths, output_pa
     original_image = cv2.imread(original_image_path)
     original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     
-    segmented_image = np.zeros_like(original_image)
+    # Create an accumulator mask to hold the combined mask of the selected indices
+    accumulator_mask = np.zeros(original_image.shape[:2], dtype=np.float32)
     
     for mask_path in mask_paths:
-        mask = cv2.imread(mask_path, 0)
-        mask = mask.astype(bool)
+        # Read the mask and convert it to a floating point type
+        mask = cv2.imread(mask_path, 0).astype(np.float32) / 255.0
+
+        # Apply Gaussian blur to the mask to smooth edges
+        mask = cv2.GaussianBlur(mask, (5, 5), 0)
         
-        for i in range(3):  # For each color channel
-            segmented_image[:, :, i][mask] = original_image[:, :, i][mask]
+        # Accumulate the mask
+        accumulator_mask = np.maximum(accumulator_mask, mask)
+
+    # Threshold the accumulated mask to create a binary mask
+    _, binary_mask = cv2.threshold(accumulator_mask, 0.5, 1.0, cv2.THRESH_BINARY)
+    
+    # Convert the binary mask back to boolean
+    binary_mask = binary_mask.astype(bool)
+
+    segmented_image = np.zeros_like(original_image)
+    for i in range(3):  # For each color channel
+        segmented_image[:, :, i][binary_mask] = original_image[:, :, i][binary_mask]
     
     # Save or Display the Result
     result_path = os.path.join(output_path, 'segmented_image.jpg')
     cv2.imwrite(result_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
     print(f"Segmented image saved to {result_path}")
+
 
 if __name__ == "__main__":
     generate_image('path/to/your/image.jpg', 'filename.jpg')
