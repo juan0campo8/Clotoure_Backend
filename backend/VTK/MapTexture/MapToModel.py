@@ -16,11 +16,17 @@ from vtkmodules.vtkIOGeometry import vtkOBJReader
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 
+from vtkmodules.vtkFiltersCore import (
+    vtkPolyDataTangents,
+    vtkTriangleFilter
+)
+
 from vtkmodules.vtkFiltersSources import (
     vtkCubeSource,
     vtkParametricFunctionSource,
     vtkTexturedSphereSource
 )
+
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper,
@@ -84,10 +90,10 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkJPEGReader()
+    reader2 = vtkPNGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
@@ -96,6 +102,7 @@ def main():
 
     # Create texture object
     texture = vtkTexture()
+    texture.InterpolateOn()
     texture.SetInputConnection(reader.GetOutputPort())
     
     texture2 = vtkTexture()
@@ -105,9 +112,7 @@ def main():
     
     map_to_model = vtkTextureMapToPlane()   #Plane texture map is good
     # UV Bias for shifting image in various directions
-    
-    # map_to_model = vtkTextureMapToCylinder()      Cylinder texture map is also good
-    # map_to_model = vtkTextureMapToSphere()
+
     map_to_model.SetInputConnection(objreader.GetOutputPort())
     # map_to_model.PreventSeamOn()
 
@@ -115,12 +120,24 @@ def main():
     mapper = vtkPolyDataMapper()
     mapper.SetInputConnection(map_to_model.GetOutputPort())
 
+    #triangulation = vtkTriangleFilter()
+    #triangulation.SetInputConnection(objreader.GetOutputPort())
+
+    #tangents = vtkPolyDataTangents()
+    #tangents.SetInputConnection(triangulation.GetOutputPort())
+
+    #mapper = vtkPolyDataMapper()
+    #mapper.SetInputConnection(tangents.GetOutputPort())
+
     # Create actor and set the mapper and the texture
     actor = vtkActor()
     bp = vtkProperty()
     bp.SetColor(colors.GetColor3d('Blue'))
     # actor.GetProperty().SetColor(colors.GetColor3d('red'))
     actor.SetMapper(mapper)
+    
+    texture.SetWrap(vtkTexture.ClampToEdge)
+
     actor.SetTexture(texture)
     actor.SetBackfaceProperty(bp)
 
