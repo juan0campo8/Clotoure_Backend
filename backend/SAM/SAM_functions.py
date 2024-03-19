@@ -88,6 +88,7 @@ def generate_image(ifile, fn):
     except Exception as e:
         os.remove(ifile)
         print(str(e))
+
 def segment_image_with_selected_masks(original_image_path, mask_paths, output_path):
     original_image = cv2.imread(original_image_path)
     original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
@@ -98,7 +99,7 @@ def segment_image_with_selected_masks(original_image_path, mask_paths, output_pa
     for mask_path in mask_paths:
         # Read the mask and convert it to a floating point type
         mask = cv2.imread(mask_path, 0).astype(np.float32) / 255.0
-
+        
         # Apply Gaussian blur to the mask to smooth edges
         mask = cv2.GaussianBlur(mask, (5, 5), 0)
         
@@ -108,18 +109,28 @@ def segment_image_with_selected_masks(original_image_path, mask_paths, output_pa
     # Threshold the accumulated mask to create a binary mask
     _, binary_mask = cv2.threshold(accumulator_mask, 0.5, 1.0, cv2.THRESH_BINARY)
     
-    # Convert the binary mask back to boolean
-    binary_mask = binary_mask.astype(bool)
-
-    segmented_image = np.zeros_like(original_image)
-    for i in range(3):  # For each color channel
-        segmented_image[:, :, i][binary_mask] = original_image[:, :, i][binary_mask]
+    # Creating an RGBA image by adding an alpha channel to the original image
+    rgba_segmented_image = np.zeros((original_image.shape[0], original_image.shape[1], 4), dtype=np.uint8)
     
-    # Save or Display the Result
-    result_path = os.path.join(output_path, 'segmented_image.jpg')
-    cv2.imwrite(result_path, cv2.cvtColor(segmented_image, cv2.COLOR_RGB2BGR))
-    print(f"Segmented image saved to {result_path}")
+    for i in range(3):  # Copy RGB channels from the original image
+        rgba_segmented_image[:, :, i] = original_image[:, :, i]
+    
+    # Set the alpha channel based on the binary mask
+    rgba_segmented_image[:, :, 3] = (binary_mask * 255).astype(np.uint8)
 
+    # Find contours to identify the shirt and calculate the bounding box for cropping
+    contours, _ = cv2.findContours((binary_mask * 255).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest_contour)
+        
+        # Crop the RGBA image to the bounding box dimensions, focusing on the shirt
+        cropped_rgba_segmented_image = rgba_segmented_image[y:y+h, x:x+w]
+
+        # Save the result as a PNG to preserve transparency
+        result_path = os.path.join(output_path, 'segmented_image_cropped.png')
+        cv2.imwrite(result_path, cv2.cvtColor(cropped_rgba_segmented_image, cv2.COLOR_RGBA2BGRA))
+        print(f"Segmented and cropped image with transparent background saved to {result_path}")
 
 if __name__ == "__main__":
     generate_image('path/to/your/image.jpg', 'filename.jpg')
