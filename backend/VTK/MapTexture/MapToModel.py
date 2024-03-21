@@ -64,6 +64,20 @@ def get_program_parameters():
 #    elif key == "Down":
 #         actor.RotateX(-5.0)
         
+def create_window(actor):
+    ren = vtkRenderer()
+    render_window = vtkRenderWindow()
+    render_window.SetSize(480, 480)
+    render_window.AddRenderer(ren)
+    
+    render_window_interactor = vtkRenderWindowInteractor()
+    render_window_interactor.SetRenderWindow(render_window)
+    
+    ren.AddActor(actor)
+    ren.ResetCamera()
+    
+    return render_window, render_window_interactor
+
 
 def main():
     colors = vtkNamedColors()
@@ -75,25 +89,38 @@ def main():
     #jpegfile2 = "./res/BackShirt.jpg"
     #objfile   = "./obj/tshirt.obj"
     
+    jpegfile = "./res/" + jpegfile
+    jpegfile2 = "./res/" + jpegfile2
+    objfile = "./obj/" + objfile
+    
     # Create a render window
     ren = vtkRenderer()
     renWin = vtkRenderWindow()
     renWin.AddRenderer(ren)
     renWin.SetSize(480, 480)
-    renWin.SetWindowName('Model Render')
+    renWin.SetWindowName('Render0')
+    
+    ren1 = vtkRenderer()
+    renWin1 = vtkRenderWindow()
+    renWin1.AddRenderer(ren1)
+    renWin1.SetSize(480, 480)
+    renWin1.SetWindowName('Render1')
 
     iren = vtkRenderWindowInteractor()
-    
+    iren1 = vtkRenderWindowInteractor()
+
     
     # Set render window
     iren.SetRenderWindow(renWin)
+    
+    iren1.SetRenderWindow(renWin1)
 
     # Read the image data from a file
     
-    reader = vtkPNGReader()
+    reader = vtkJPEGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkPNGReader()
+    reader2 = vtkJPEGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
@@ -106,6 +133,7 @@ def main():
     texture.SetInputConnection(reader.GetOutputPort())
     
     texture2 = vtkTexture()
+    texture.InterpolateOn()
     texture2.SetInputConnection(reader2.GetOutputPort())  # Second texture 
 
     # Map texture coordinates
@@ -120,45 +148,55 @@ def main():
     mapper = vtkPolyDataMapper()
     mapper.SetInputConnection(map_to_model.GetOutputPort())
 
-    #triangulation = vtkTriangleFilter()
-    #triangulation.SetInputConnection(objreader.GetOutputPort())
-
-    #tangents = vtkPolyDataTangents()
-    #tangents.SetInputConnection(triangulation.GetOutputPort())
-
-    #mapper = vtkPolyDataMapper()
-    #mapper.SetInputConnection(tangents.GetOutputPort())
-
     # Create actor and set the mapper and the texture
-    actor = vtkActor()
+    
     bp = vtkProperty()
     bp.SetColor(colors.GetColor3d('Blue'))
     # actor.GetProperty().SetColor(colors.GetColor3d('red'))
-    actor.SetMapper(mapper)
+   
+    # Create first actor
+    actor1 = vtkActor()
+    actor1.SetMapper(mapper)
     
+    # Create second actor
+    actor2 = vtkActor()
+    actor2.SetMapper(mapper)
+    
+
     texture.SetWrap(vtkTexture.ClampToEdge)
 
-    actor.SetTexture(texture)
-    actor.SetBackfaceProperty(bp)
 
-    ren.AddActor(actor)
+    actor1.SetTexture(texture)
+    actor1.SetBackfaceProperty(bp)
+    
+    actor2.SetTexture(texture2)
+    actor2.SetBackfaceProperty(bp)
+    
+    
+    renderWindow1, renderWindowInteractor1 = create_window(actor1)
+    
+    ren.AddActor(actor1)
     ren.SetBackground(colors.GetColor3d('Red'))
-    # Interactor 
-    # interactorStyle = vtkInteractorStyleTrackballCamera()
-    # iren.SetInteractorStyle(interactorStyle)
+    
+    ren1.AddActor(actor2)
+    ren1.SetBackground(colors.GetColor3d('Blue'))
+    
+    renderWindow1, renderWindowInteractor1 = create_window(actor1)
 
     iren.Initialize()
-    
-    # key = vtkRenderWindowInteractor.GetKeySym()
-    # vtkRenderWindowInteractor.AddObserver("KeyPressEvent", rotate_callback(key, actor))
+    iren1.Initialize()
     
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
     # Enable the widget.
     cam_orient_manipulator.On()
     
+    
+    
     renWin.Render()
+    renWin1.Render()
     iren.Start()
+    iren1.Start()
     
     
 
