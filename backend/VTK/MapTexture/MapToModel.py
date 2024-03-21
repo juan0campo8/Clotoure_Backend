@@ -15,6 +15,7 @@ from vtkmodules.vtkIOImage import vtkPNGReader
 from vtkmodules.vtkIOGeometry import vtkOBJReader
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
+from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 
 from vtkmodules.vtkFiltersCore import (
     vtkPolyDataTangents,
@@ -53,16 +54,6 @@ def get_program_parameters():
     arg3 = args.filename3
     return args.filename1, args.filename2, args.filename3
     # takes in jpg file and obj file IN THAT ORDER
-    
-# def rotate_callback(key,actor): 
-#    if key == "Left":
-#        actor.RotateY(5.0)
-#    elif key == "Right":
-#        actor.RotateY(-5.0)
-#    elif key == "Up":
-#        actor.RotateX(5.0)
-#    elif key == "Down":
-#         actor.RotateX(-5.0)
         
 def create_window(actor):
     ren = vtkRenderer()
@@ -110,9 +101,8 @@ def main():
     iren1 = vtkRenderWindowInteractor()
 
     
-    # Set render window
+    # Set render windows
     iren.SetRenderWindow(renWin)
-    
     iren1.SetRenderWindow(renWin1)
 
     # Read the image data from a file
@@ -162,6 +152,10 @@ def main():
     actor2 = vtkActor()
     actor2.SetMapper(mapper)
     
+    
+    #Axes
+    axes = vtkAxesActor()
+    
 
     texture.SetWrap(vtkTexture.ClampToEdge)
 
@@ -172,31 +166,41 @@ def main():
     actor2.SetTexture(texture2)
     actor2.SetBackfaceProperty(bp)
     
+    actor1.SetPosition(0,0,5)
+    actor2.SetPosition(0,0,-0.5)
+    # actor2.RotateY(180) ## Rotate Actor
     
     renderWindow1, renderWindowInteractor1 = create_window(actor1)
     
     ren.AddActor(actor1)
+    ren.AddActor(actor2)
     ren.SetBackground(colors.GetColor3d('Red'))
     
     ren1.AddActor(actor2)
     ren1.SetBackground(colors.GetColor3d('Blue'))
     
+    ren.AddActor(axes)
+    ren1.AddActor(axes)
+    
+    
     renderWindow1, renderWindowInteractor1 = create_window(actor1)
 
     iren.Initialize()
-    iren1.Initialize()
+    # iren1.Initialize()
     
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
+    cam_orient_manipulator.SetParentRenderer(ren1)
     # Enable the widget.
     cam_orient_manipulator.On()
     
     
     
+    
     renWin.Render()
-    renWin1.Render()
+    # renWin1.Render()
     iren.Start()
-    iren1.Start()
+    # iren1.Start()
     
     
 
