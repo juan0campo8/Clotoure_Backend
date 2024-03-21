@@ -79,22 +79,41 @@ def segment_image():
 # New API request has to include input_points, input_label, input_box
 # {TODO} implement this endpoint
 
-'''
-@app.route("segment/manual", methods=["POST"])
+@app.route("/mult", methods=["POST"])
+def man():
+    try:
+        if 'file' not in request.files:
+            print('No file part')
+            return "No file uploaded"
+        file = request.files['file']
+        print(file.filename)
+        data = request.form['data']
+        DATA = json.loads(data)
+        print(DATA)
+        return json.loads(data)
+    except Exception as e:
+        return str(e)
+
+#'''
+@app.route("/segment/manual", methods=["POST"])
 def manual_segmentation():
     try:
-        ifile = request.files[file]
+        if 'file' not in request.files:
+            print('No file part')
+            return "No file uploaded"
+        file = request.files['file']
         if file.filename == '':
             print('No selected file')
             return "No selected file"
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
         if file and allowed_file(file.filename):
-            data = requests.form
+            data = request.form['data']
             DATA = json.loads(data)
             INPUT_POINTS = DATA['input_points']
             INPUT_LABEL = DATA['input_label']
             INPUT_BOX = DATA['input_box']
+            print("all good")
 
             tag = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
             
@@ -113,7 +132,7 @@ def manual_segmentation():
                 'started': True,
                 'filetag': tag
                 }
-
+            return(output)
     except Exception as e:
         return str(e)
-'''
+#'''
