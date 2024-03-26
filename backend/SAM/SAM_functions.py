@@ -106,10 +106,19 @@ def segment_image_with_selected_masks(original_image_path, mask_paths, output_pa
         # Update the alpha channel of rgba_image based on the mask
         rgba_image[:, :, 3] = np.where(mask == 255, 255, rgba_image[:, :, 3])
 
+    # Find the bounding box around the non-transparent areas
+    coords = np.column_stack(np.where(rgba_image[:, :, 3] > 0))
+    x0, y0 = coords.min(axis=0)
+    x1, y1 = coords.max(axis=0) + 1   # slices are exclusive at the top
+
+    # Crop the image to the bounding box
+    cropped_rgba_image = rgba_image[y0:y1, x0:x1]
+
     # Save the resulting image with transparent background where masks are not applied
-    result_path = os.path.join(output_path, 'masked_image_with_transparency.png')  # Use PNG to keep transparency
-    cv2.imwrite(result_path, cv2.cvtColor(rgba_image, cv2.COLOR_RGBA2BGRA))
-    print(f"Image with masks applied and transparent background saved to {result_path}")
+    result_path = os.path.join(output_path, 'segmented_and_cropped.png')  # Use PNG to keep transparency
+    cv2.imwrite(result_path, cv2.cvtColor(cropped_rgba_image, cv2.COLOR_RGBA2BGRA))
+    print(f"Cropped image with masks applied and transparent background saved to {result_path}")
+
 
         
 # The following function is tentative and has not been tested yet
