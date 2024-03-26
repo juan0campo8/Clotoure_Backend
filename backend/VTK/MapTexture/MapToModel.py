@@ -190,7 +190,7 @@ def main():
     
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
-    cam_orient_manipulator.SetParentRenderer(ren1)
+    # cam_orient_manipulator.SetParentRenderer(ren1)
     # Enable the widget.
     cam_orient_manipulator.On()
     
