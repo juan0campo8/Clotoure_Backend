@@ -90,47 +90,95 @@ def generate_image(ifile, fn):
         print(str(e))
 
 def segment_image_with_selected_masks(original_image_path, mask_paths, output_path):
+    # Load the original image in RGB
     original_image = cv2.imread(original_image_path)
     original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     
-    # Create an accumulator mask to hold the combined mask of the selected indices
-    accumulator_mask = np.zeros(original_image.shape[:2], dtype=np.float32)
-    
+    # Prepare an RGBA image for the output: initialize alpha to 0 (fully transparent)
+    rgba_image = np.zeros((*original_image.shape, 4), dtype=np.uint8)
+    rgba_image[:, :, :3] = original_image  # Copy RGB values
+    rgba_image[:, :, 3] = 0  # Set alpha to 0
+
     for mask_path in mask_paths:
-        # Read the mask and convert it to a floating point type
-        mask = cv2.imread(mask_path, 0).astype(np.float32) / 255.0
+        # Load the mask
+        mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
         
-        # Apply Gaussian blur to the mask to smooth edges
-        mask = cv2.GaussianBlur(mask, (5, 5), 0)
+        # Update the alpha channel of rgba_image based on the mask
+        rgba_image[:, :, 3] = np.where(mask == 255, 255, rgba_image[:, :, 3])
+
+    # Save the resulting image with transparent background where masks are not applied
+    result_path = os.path.join(output_path, 'masked_image_with_transparency.png')  # Use PNG to keep transparency
+    cv2.imwrite(result_path, cv2.cvtColor(rgba_image, cv2.COLOR_RGBA2BGRA))
+    print(f"Image with masks applied and transparent background saved to {result_path}")
+
         
-        # Accumulate the mask
-        accumulator_mask = np.maximum(accumulator_mask, mask)
+# The following function is tentative and has not been tested yet
+# {TODO} Test the following function for implementation and expand it to include 
+# point inputs
+#'''
+def generate_manual_mask(ifile, fn, input_points, input_labels, input_box):
+    try:
+        name = fn.rsplit('.', 1)[0]
+        cwd = os.getcwd() 
+        path = os.path.join(cwd, name)
+        os.mkdir(path)
+        print(ifile)
+        image = cv2.imread(ifile)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    # Threshold the accumulated mask to create a binary mask
-    _, binary_mask = cv2.threshold(accumulator_mask, 0.5, 1.0, cv2.THRESH_BINARY)
-    
-    # Creating an RGBA image by adding an alpha channel to the original image
-    rgba_segmented_image = np.zeros((original_image.shape[0], original_image.shape[1], 4), dtype=np.uint8)
-    
-    for i in range(3):  # Copy RGB channels from the original image
-        rgba_segmented_image[:, :, i] = original_image[:, :, i]
-    
-    # Set the alpha channel based on the binary mask
-    rgba_segmented_image[:, :, 3] = (binary_mask * 255).astype(np.uint8)
+        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
+        model_type = "vit_h"
+        sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
 
-    # Find contours to identify the shirt and calculate the bounding box for cropping
-    contours, _ = cv2.findContours((binary_mask * 255).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if contours:
-        largest_contour = max(contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(largest_contour)
+        print('loading models')
+        #onnx_model_path = os.getcwd() + r"\SAM\sam_vit_h_onnx_model.onnx"
+        #onnx_model = SamOnnxModel(sam, return_single_mask=True)
+        #ort_session = onnxruntime.InferenceSession(onnx_model_path)
+        print('starting predictor')
+
+        sam.to(device='cpu')
+        predictor = SamPredictor(sam)
+        predictor.set_image(image)
+        #image_embedding = predictor.get_image_embedding().cpu().numpy()
+        #image_embedding.shape
+        print('checking for segmentatino')
         
-        # Crop the RGBA image to the bounding box dimensions, focusing on the shirt
-        cropped_rgba_segmented_image = rgba_segmented_image[y:y+h, x:x+w]
+        if(input_points == None):
+            print('segmenting')
+            input_box = np.array(input_box)
+            mask, _, _ = predictor.predict(
+                point_coords= None,
+                point_labels= None,
+                box=input_box[None, :],
+                multimask_output= False)
+            print('creating new image')
+            filename = os.path.join(path, 'mask1.jpg')
+            data = im.fromarray(mask[0])
+            data.save(filename)
+            print("mask created")
+            #egment_image_with_selected_masks(ifile, filename, path)
+        elif(input_box == None):
+            mask, _, _ = predictor.predict(
+                point_coords= input_points,
+                point_labels= input_labels,
+                box= None,
+                multimask_output= False)
 
-        # Save the result as a PNG to preserve transparency
-        result_path = os.path.join(output_path, 'segmented_image_cropped.png')
-        cv2.imwrite(result_path, cv2.cvtColor(cropped_rgba_segmented_image, cv2.COLOR_RGBA2BGRA))
-        print(f"Segmented and cropped image with transparent background saved to {result_path}")
+            h, w = mask.shape[-2:]
+            mask_image = mask.reshape(h, w, 1) 
+
+            filename = os.path.join(path, 'mask1.jpg')
+            data = im.fromarray(mask_image)
+            data.save(filename)        
+        else:
+            print("failure")
+        
+
+
+    except Exception as e:
+        os.remove(ifile)
+        print(str(e))
+#'''
 
 if __name__ == "__main__":
     generate_image('path/to/your/image.jpg', 'filename.jpg')
