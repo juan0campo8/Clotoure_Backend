@@ -131,6 +131,74 @@ def segment_image_with_selected_masks(original_image_path, mask_paths, output_pa
         result_path = os.path.join(output_path, 'segmented_image_cropped.png')
         cv2.imwrite(result_path, cv2.cvtColor(cropped_rgba_segmented_image, cv2.COLOR_RGBA2BGRA))
         print(f"Segmented and cropped image with transparent background saved to {result_path}")
+        
+# The following function is tentative and has not been tested yet
+# {TODO} Test the following function for implementation and expand it to include 
+# point inputs
+#'''
+def generate_manual_mask(ifile, fn, input_points, input_labels, input_box):
+    try:
+        name = fn.rsplit('.', 1)[0]
+        cwd = os.getcwd() 
+        path = os.path.join(cwd, name)
+        os.mkdir(path)
+        print(ifile)
+        image = cv2.imread(ifile)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
+        model_type = "vit_h"
+        sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
+
+        print('loading models')
+        #onnx_model_path = os.getcwd() + r"\SAM\sam_vit_h_onnx_model.onnx"
+        #onnx_model = SamOnnxModel(sam, return_single_mask=True)
+        #ort_session = onnxruntime.InferenceSession(onnx_model_path)
+        print('starting predictor')
+
+        sam.to(device='cpu')
+        predictor = SamPredictor(sam)
+        predictor.set_image(image)
+        #image_embedding = predictor.get_image_embedding().cpu().numpy()
+        #image_embedding.shape
+        print('checking for segmentatino')
+        
+        if(input_points == None):
+            print('segmenting')
+            input_box = np.array(input_box)
+            mask, _, _ = predictor.predict(
+                point_coords= None,
+                point_labels= None,
+                box=input_box[None, :],
+                multimask_output= False)
+            print('creating new image')
+            filename = os.path.join(path, 'mask1.jpg')
+            data = im.fromarray(mask[0])
+            data.save(filename)
+            print("mask created")
+            #egment_image_with_selected_masks(ifile, filename, path)
+        elif(input_box == None):
+            mask, _, _ = predictor.predict(
+                point_coords= input_points,
+                point_labels= input_labels,
+                box= None,
+                multimask_output= False)
+
+            h, w = mask.shape[-2:]
+            mask_image = mask.reshape(h, w, 1) 
+
+            filename = os.path.join(path, 'mask1.jpg')
+            data = im.fromarray(mask_image)
+            data.save(filename)        
+        else:
+            print("failure")
+        
+
+
+    except Exception as e:
+        os.remove(ifile)
+        print(str(e))
+#'''
 
 if __name__ == "__main__":
     generate_image('path/to/your/image.jpg', 'filename.jpg')
