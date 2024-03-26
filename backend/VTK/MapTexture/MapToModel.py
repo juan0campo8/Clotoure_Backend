@@ -80,7 +80,7 @@ def main():
     iren.SetRenderWindow(renWin)
 
     # Read the image data from a file
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
     reader2 = vtkJPEGReader()
@@ -93,6 +93,7 @@ def main():
     # Create texture object
     texture = vtkTexture()
     texture.SetInputConnection(reader.GetOutputPort())
+    texture.GetWrap()
     
     texture2 = vtkTexture()
     texture2.SetInputConnection(reader.GetOutputPort())  # Second texture 
@@ -106,6 +107,7 @@ def main():
     # map_to_model = vtkTextureMapToSphere()
     map_to_model.SetInputConnection(objreader.GetOutputPort())
     # map_to_model.PreventSeamOn()
+    
 
     # Create mapper and set the mapped texture as input
     mapper = vtkPolyDataMapper()
@@ -114,7 +116,7 @@ def main():
     # Create actor and set the mapper and the texture
     actor = vtkActor()
     bp = vtkProperty()
-    bp.SetColor(0,1,0)
+    bp.SetColor(0,0,0)
     # actor.GetProperty().SetColor(colors.GetColor3d('red'))
     actor.SetMapper(mapper)
     actor.SetTexture(texture)
