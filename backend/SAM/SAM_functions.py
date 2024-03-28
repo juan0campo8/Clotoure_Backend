@@ -92,36 +92,45 @@ def generate_image(ifile, fn):
 def segment_image_with_selected_masks(original_image_path, mask_paths, output_path):
     # Load the original image in RGB
     original_image = cv2.imread(original_image_path)
-    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    original_image_rgb = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     
-    # Prepare an RGBA image for the output: initialize alpha to 0 (fully transparent)
-    rgba_image = np.zeros((*original_image.shape, 4), dtype=np.uint8)
-    rgba_image[:, :, :3] = original_image  # Copy RGB values
-    rgba_image[:, :, 3] = 0  # Set alpha to 0
+    # Initialize an empty mask to accumulate all selected masks
+    accumulated_mask = np.zeros(original_image.shape[:2], dtype=np.uint8)
 
+    # Process each selected mask
     for mask_path in mask_paths:
         # Load the mask
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
         
-        # Apply Gaussian blur to the mask to smooth edges
-        blurred_mask = cv2.GaussianBlur(mask, (5, 5), 0)
+        # Apply Gaussian blur to smooth the mask edges
+        blurred_mask = cv2.GaussianBlur(mask, (21, 21), 0)
         
-        # Convert the blurred mask back to binary for clear segmentation
-        _, binary_mask = cv2.threshold(blurred_mask, 127, 255, cv2.THRESH_BINARY)
+        # Accumulate the processed mask
+        accumulated_mask = cv2.bitwise_or(accumulated_mask, blurred_mask)
+
+    # Convert accumulated mask to boolean for masking operation
+    accumulated_mask_bool = accumulated_mask > 128  # Adjust threshold as needed
+
+    # Create an RGBA version of the original image
+    original_image_rgba = np.concatenate([original_image_rgb, np.full((*original_image_rgb.shape[:2], 1), 255, dtype=np.uint8)], axis=-1)
+    
+    # Apply the mask to the RGBA image
+    original_image_rgba[~accumulated_mask_bool] = (0, 0, 0, 0)  # Set unmasked areas to transparent
+
+    # Find contours to identify the extents of the masked area for cropping
+    contours, _ = cv2.findContours(accumulated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        # Assuming you want to crop to the largest contour found
+        largest_contour = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest_contour)
         
-        # Update the alpha channel of rgba_image based on the mask
-        rgba_image[:, :, 3] = np.where(binary_mask == 255, 255, rgba_image[:, :, 3])
+        # Crop the RGBA image to this bounding box
+        cropped_image = original_image_rgba[y:y+h, x:x+w]
 
-    # Crop the image as before
-    coords = np.column_stack(np.where(rgba_image[:, :, 3] > 0))
-    x0, y0 = coords.min(axis=0)
-    x1, y1 = coords.max(axis=0) + 1   # slices are exclusive at the top
-    cropped_rgba_image = rgba_image[y0:y1, x0:x1]
-
-    # Save the resulting image with transparent background where masks are not applied
-    result_path = os.path.join(output_path, 'segmented_and_cropped.png')  # Use PNG to keep transparency
-    cv2.imwrite(result_path, cv2.cvtColor(cropped_rgba_image, cv2.COLOR_RGBA2BGRA))
-    print(f"Cropped image with masks applied and transparent background saved to {result_path}")
+        # Save the cropped, masked image with smooth edges and transparency
+        result_path = os.path.join(output_path, 'segmented_and_cropped.png')  # PNG to preserve transparency
+        im.fromarray(cropped_image).save(result_path)
+        print(f"Cropped image with masks applied and transparent background saved to {result_path}")
 
 
 
