@@ -64,18 +64,44 @@ def generate_image(ifile, fn):
 
         user_input = input("Enter the numbers of the composites to keep, separated by commas (e.g., 0,2,3): ")
         selected_indices = [int(idx) for idx in user_input.split(',')]
+        
+        # Calculate paths for the selected composite images
         selected_composite_paths = [composite_images_paths[idx] for idx in selected_indices]
 
-        print("Selected composites:")
-        for path in selected_composite_paths:
-            print(path)
-            # You might want to move these selected composites to a different directory or process them further as needed
+        # Combine selected composite images into one and save it
+        combine_selected_composites(selected_composite_paths, path)  # 'path' is the directory where you've been saving everything
 
     except Exception as e:
         print(str(e))
         if os.path.exists(ifile):
             os.remove(ifile)
 
+def combine_selected_composites(selected_paths, output_path):
+    """
+    Combine selected composite images into one and save it.
+
+    Args:
+    selected_paths (list of str): Paths to the selected composite images.
+    output_path (str): Path where the combined image should be saved.
+    """
+    # Initialize a blank RGBA image for the base
+    base_image = None
+
+    for path in selected_paths:
+        # Load the composite image
+        composite_image = im.open(path).convert("RGBA")
+
+        if base_image is None:
+            # The first image is used as the base
+            base_image = composite_image
+        else:
+            # Overlay this composite on the base image
+            base_image = im.alpha_composite(base_image, composite_image)
+
+    # Save the combined image
+    combined_image_path = os.path.join(output_path, 'combined_selected_composites.png')
+    base_image.save(combined_image_path)
+    print(f"Combined image saved to {combined_image_path}")
 
         
 # The following function is tentative and has not been tested yet
