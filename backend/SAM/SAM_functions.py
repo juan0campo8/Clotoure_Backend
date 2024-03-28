@@ -37,18 +37,34 @@ def generate_image(ifile, fn):
     try:    
         name = fn.rsplit('.', 1)[0]
         cwd = os.getcwd() 
+        print(cwd)
         path = os.path.join(cwd, name)
+        print(path)
         os.mkdir(path)
+        print(ifile)
         image = cv2.imread(ifile)
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        print('reading image')
         sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
         model_type = "vit_h"
+
         device = "cpu"
+        # set to "cpu"
+        print('loading model')
         sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
         sam.to(device=device)
+        print('setting up mask generation')
         mask_generator = SamAutomaticMaskGenerator(sam)
 
+        print('generating masks')
+        begin = time.datetime.now()
+        print(begin)
         masks = mask_generator.generate(image_rgb)  # Assume this returns a list of masks
+
+        print('writing to file')
+        end = time.datetime.now()
+        print(end)
+        print(end - begin)
 
         composite_images_paths = []
         for x, mask in enumerate(masks):
@@ -58,11 +74,11 @@ def generate_image(ifile, fn):
             composite_images_paths.append(composite_image_path)
             
         # List the composite images for the user to select
-        print("Available composites:")
+        print("Available Masks:")
         for idx, composite_path in enumerate(composite_images_paths):
             print(f'{idx}: {composite_path.split(os.sep)[-1]}')
 
-        user_input = input("Enter the numbers of the composites to keep, separated by commas (e.g., 0,2,3): ")
+        user_input = input("Enter the numbers of the Masks to keep, separated by commas (e.g., 0,2,3): ")
         selected_indices = [int(idx) for idx in user_input.split(',')]
         
         # Calculate paths for the selected composite images
