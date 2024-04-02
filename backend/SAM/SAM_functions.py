@@ -15,21 +15,23 @@ def print_func():
     return "success"
     
 
-def show_anns(anns):
-    if len(anns) == 0:
-        return
-    sorted_anns = sorted(anns, key=(lambda x: x['area']), reverse=True)
-    ax = plt.gca()
-    ax.set_autoscale_on(False)
-
-    img = np.ones((sorted_anns[0]['segmentation'].shape[0], sorted_anns[0]['segmentation'].shape[1], 4))
-    img[:,:,3] = 0
-    for ann in sorted_anns:
-        m = ann['segmentation']
-        color_mask = np.concatenate([np.random.random(3), [0.35]])
-        img[m] = color_mask
-    ax.imshow(img)
-
+def apply_mask_to_image(original_image, mask):
+    """
+    Apply a mask to the original image, making the masked area visible and the rest transparent.
+    """
+    # Ensure the mask is boolean
+    mask_bool = mask.astype(bool)
+    
+    # Convert original image to RGBA if not already
+    if original_image.shape[2] == 3:  # RGB
+        original_image_rgba = np.concatenate([original_image, np.full((*original_image.shape[:2], 1), 255, dtype=np.uint8)], axis=-1)
+    else:  # Already RGBA
+        original_image_rgba = original_image
+    
+    # Apply mask
+    original_image_rgba[~mask_bool] = (0, 0, 0, 0)  # Set unmasked area to transparent
+    
+    return original_image_rgba
 
 def generate_image(ifile, fn):
     try:    
@@ -41,7 +43,7 @@ def generate_image(ifile, fn):
         os.mkdir(path)
         print(ifile)
         image = cv2.imread(ifile)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         print('reading image')
         sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
         model_type = "vit_h"
@@ -57,80 +59,66 @@ def generate_image(ifile, fn):
         print('generating masks')
         begin = time.datetime.now()
         print(begin)
-        masks = mask_generator.generate(image)
+        masks = mask_generator.generate(image_rgb)  # Assume this returns a list of masks
 
         print('writing to file')
         end = time.datetime.now()
         print(end)
         print(end - begin)
 
-        # updated code (Adding segmentation to the original image, allowing user to select which masks)
-        mask_files = []
+        composite_images_paths = []
         for x, mask in enumerate(masks):
-            filename = os.path.join(path, f'mask{x}.jpg')
-            mask_files.append(filename)
-            data = im.fromarray(mask['segmentation'])
-            data.save(filename)
+            mask_applied_image = apply_mask_to_image(image_rgb, mask['segmentation'])
+            composite_image_path = os.path.join(path, f'composite{x}.png')
+            im.fromarray(mask_applied_image).save(composite_image_path)
+            composite_images_paths.append(composite_image_path)
             
-        # List masks for the user
-        print("Available masks:")
-        for idx, mask_file in enumerate(mask_files):
-            print(f'{idx}: {mask_file.split(os.sep)[-1]}')
-        
-        # Prompt user for selection
-        user_input = input("Enter the numbers of the masks to apply, separated by commas (e.g., 0,2,3): ")
-        selected_indices = [int(idx) for idx in user_input.split(',')]
-        selected_mask_paths = [mask_files[idx] for idx in selected_indices]
+        # List the composite images for the user to select
+        print("Available Masks:")
+        for idx, composite_path in enumerate(composite_images_paths):
+            print(f'{idx}: {composite_path.split(os.sep)[-1]}')
 
-        # Apply selected masks
-        segment_image_with_selected_masks(ifile, selected_mask_paths, path)
+        user_input = input("Enter the numbers of the Masks to keep, separated by commas (e.g., 0,2,3): ")
+        selected_indices = [int(idx) for idx in user_input.split(',')]
+        
+        # Calculate paths for the selected composite images
+        selected_composite_paths = [composite_images_paths[idx] for idx in selected_indices]
+
+        # Combine selected composite images into one and save it
+        combine_selected_composites(selected_composite_paths, path)  # 'path' is the directory where you've been saving everything
 
     except Exception as e:
-        os.remove(ifile)
         print(str(e))
+        if os.path.exists(ifile):
+            os.remove(ifile)
 
-def segment_image_with_selected_masks(original_image_path, mask_paths, output_path):
-    original_image = cv2.imread(original_image_path)
-    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-    
-    # Create an accumulator mask to hold the combined mask of the selected indices
-    accumulator_mask = np.zeros(original_image.shape[:2], dtype=np.float32)
-    
-    for mask_path in mask_paths:
-        # Read the mask and convert it to a floating point type
-        mask = cv2.imread(mask_path, 0).astype(np.float32) / 255.0
-        
-        # Apply Gaussian blur to the mask to smooth edges
-        mask = cv2.GaussianBlur(mask, (5, 5), 0)
-        
-        # Accumulate the mask
-        accumulator_mask = np.maximum(accumulator_mask, mask)
+def combine_selected_composites(selected_paths, output_path):
+    """
+    Combine selected composite images into one and save it.
 
-    # Threshold the accumulated mask to create a binary mask
-    _, binary_mask = cv2.threshold(accumulator_mask, 0.5, 1.0, cv2.THRESH_BINARY)
-    
-    # Creating an RGBA image by adding an alpha channel to the original image
-    rgba_segmented_image = np.zeros((original_image.shape[0], original_image.shape[1], 4), dtype=np.uint8)
-    
-    for i in range(3):  # Copy RGB channels from the original image
-        rgba_segmented_image[:, :, i] = original_image[:, :, i]
-    
-    # Set the alpha channel based on the binary mask
-    rgba_segmented_image[:, :, 3] = (binary_mask * 255).astype(np.uint8)
+    Args:
+    selected_paths (list of str): Paths to the selected composite images.
+    output_path (str): Path where the combined image should be saved.
+    """
+    # Initialize a blank RGBA image for the base
+    base_image = None
 
-    # Find contours to identify the shirt and calculate the bounding box for cropping
-    contours, _ = cv2.findContours((binary_mask * 255).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if contours:
-        largest_contour = max(contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(largest_contour)
-        
-        # Crop the RGBA image to the bounding box dimensions, focusing on the shirt
-        cropped_rgba_segmented_image = rgba_segmented_image[y:y+h, x:x+w]
+    for path in selected_paths:
+        # Load the composite image
+        composite_image = im.open(path).convert("RGBA")
 
-        # Save the result as a PNG to preserve transparency
-        result_path = os.path.join(output_path, 'segmented_image_cropped.png')
-        cv2.imwrite(result_path, cv2.cvtColor(cropped_rgba_segmented_image, cv2.COLOR_RGBA2BGRA))
-        print(f"Segmented and cropped image with transparent background saved to {result_path}")
+        if base_image is None:
+            # The first image is used as the base
+            base_image = composite_image
+        else:
+            # Overlay this composite on the base image
+            base_image = im.alpha_composite(base_image, composite_image)
+
+    # Save the combined image
+    combined_image_path = os.path.join(output_path, 'combined_selected_composites.png')
+    base_image.save(combined_image_path)
+    print(f"Combined image saved to {combined_image_path}")
+
         
 # The following function is tentative and has not been tested yet
 # {TODO} Test the following function for implementation and expand it to include 
