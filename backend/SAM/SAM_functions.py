@@ -92,32 +92,57 @@ def generate_image(ifile, fn):
         if os.path.exists(ifile):
             os.remove(ifile)
 
+def find_bounding_box(image):
+    """
+    Find the bounding box of non-transparent pixels in an image.
+
+    Args:
+    image (PIL.Image): An image.
+
+    Returns:
+    The bounding box as a tuple (left, upper, right, lower).
+    """
+    # Convert the image to a numpy array
+    np_image = np.array(image)
+    
+    # Find all non-transparent pixels
+    non_transparent_pixels = np.argwhere(np_image[:, :, 3] > 0)
+    
+    # Find the bounding box coordinates
+    upper_left = non_transparent_pixels.min(axis=0)
+    lower_right = non_transparent_pixels.max(axis=0) + 1  # +1 because slice indices are exclusive at the top
+    
+    # Return as (left, upper, right, lower)
+    return (upper_left[1], upper_left[0], lower_right[1], lower_right[0])
+
 def combine_selected_composites(selected_paths, output_path):
     """
-    Combine selected composite images into one and save it.
+    Combine selected composite images into one, crop to the mask edges, and save it.
 
     Args:
     selected_paths (list of str): Paths to the selected composite images.
-    output_path (str): Path where the combined image should be saved.
+    output_path (str): Path where the combined and cropped image should be saved.
     """
-    # Initialize a blank RGBA image for the base
     base_image = None
 
     for path in selected_paths:
-        # Load the composite image
         composite_image = im.open(path).convert("RGBA")
 
         if base_image is None:
-            # The first image is used as the base
             base_image = composite_image
         else:
-            # Overlay this composite on the base image
             base_image = im.alpha_composite(base_image, composite_image)
 
-    # Save the combined image
-    combined_image_path = os.path.join(output_path, 'combined_selected_composites.png')
-    base_image.save(combined_image_path)
-    print(f"Combined image saved to {combined_image_path}")
+    # Find the bounding box of non-transparent pixels
+    bbox = find_bounding_box(base_image)
+
+    # Crop the image to the bounding box
+    cropped_image = base_image.crop(bbox)
+
+    # Save the combined and cropped image
+    combined_image_path = os.path.join(output_path, 'combined_selected_composites_cropped.png')
+    cropped_image.save(combined_image_path)
+    print(f"Combined and cropped image saved to {combined_image_path}")
 
         
 # The following function is tentative and has not been tested yet
