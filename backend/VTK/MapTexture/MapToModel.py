@@ -2,7 +2,7 @@
 
 # Usage: python MapToModel.py ./res/IMAGE.jpg ./obj/MODEL.obj
 
-# Updated Usage: python MapToModel.py image_front.jpg image_back.jpg model_front.obj model_back.obj
+# Updated Usage: python MapToModel.py image_front.jpg image_back.jpg
 
 import vtk
 from PIL import Image
@@ -62,20 +62,6 @@ def get_program_parameters():
     return args.filename1, args.filename2#, args.filename3, args.filename4
     # takes in jpg file and obj file IN THAT ORDER
         
-def create_window(actor):
-    ren = vtkRenderer()
-    render_window = vtkRenderWindow()
-    render_window.SetSize(480, 480)
-    render_window.AddRenderer(ren)
-    
-    render_window_interactor = vtkRenderWindowInteractor()
-    render_window_interactor.SetRenderWindow(render_window)
-    
-    ren.AddActor(actor)
-    ren.ResetCamera()
-    
-    return render_window, render_window_interactor
-
 
 def main():
     colors = vtkNamedColors()
@@ -91,22 +77,17 @@ def main():
     jpegfile = "./res/" + jpegfile
     jpegfile2 = "./res/" + jpegfile2
     
-    # choice = input("1. Shirt or 2. pants?")
+    choice = input("1. Shirt or 2. pants?")
+    if choice == "1":
+        objfile = "./obj/splitfront.obj"
+        objfile1 = "./obj/splitback.obj"
+    if choice == "2":
+        objfile = "./obj/pantsfront.obj"
+        objfile1 = "./obj/pantsback.obj"
     
     # objfile = ""
     # objfile1 = ""
     
-    objfile = "./obj/splitfront.obj"
-    objfile1 = "./obj/splitback.obj"
-    
-    """
-    if choice == 1:
-        objfile = "./obj/splitfront.obj"
-        objfile1 = "./obj/splitback.obj"
-    elif choice == 2:
-        objfile = "./obj/pantsFront.obj"
-        objfile1 = "./obj/pantsBack.obj"
-    """
     # objfile = "./obj/" + objfile #Single model
     # mtlfile = "./mtl/" + mtlfile
     # objfile1 = "./obj/" + objfile1 
@@ -118,29 +99,19 @@ def main():
     ren = vtkRenderer()
     renWin = vtkRenderWindow()
     renWin.AddRenderer(ren)
-    renWin.SetSize(480, 480)
+    renWin.SetSize(980, 1000)
     renWin.SetWindowName('Render0')
     
-    ren1 = vtkRenderer()
-    renWin1 = vtkRenderWindow()
-    renWin1.AddRenderer(ren1)
-    renWin1.SetSize(480, 480)
-    renWin1.SetWindowName('Render1')
-
-    iren = vtkRenderWindowInteractor()
-    iren1 = vtkRenderWindowInteractor()
-
-    
     # Set render windows
+    iren = vtkRenderWindowInteractor()
     iren.SetRenderWindow(renWin)
-    iren1.SetRenderWindow(renWin1)
 
     # Read the image data from a file
     
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkJPEGReader()
+    reader2 = vtkPNGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
@@ -176,7 +147,6 @@ def main():
 
     map_to_model.SetInputConnection(objreader.GetOutputPort())
     map_to_model2.SetInputConnection(objreader1.GetOutputPort())
-    # map_to_model.PreventSeamOn()
 
     # Create mapper and set the mapped texture as input
     mapper = vtkPolyDataMapper()
@@ -186,8 +156,7 @@ def main():
     # Create actor and set the mapper and the texture
     
     bp = vtkProperty()
-    bp.SetColor(colors.GetColor3d('Blue'))
-    # actor.GetProperty().SetColor(colors.GetColor3d('red'))
+    bp.SetColor(colors.GetColor3d('White'))
    
     # Create first actor
     actor1 = vtkActor()
@@ -197,13 +166,10 @@ def main():
     actor2 = vtkActor()
     actor2.SetMapper(mapper2)
     
-    
-    #Axes
+    # Create axes actor
     axes = vtkAxesActor()
-    
 
     texture.SetWrap(vtkTexture.ClampToEdge)
-
 
     actor1.SetTexture(texture)
     actor1.SetBackfaceProperty(bp)
@@ -216,29 +182,21 @@ def main():
     #actor1.SetPosition(0,0,5)
     #actor2.SetPosition(0,0,-0.5)
     
-    # actor2.RotateY(180) ## Rotate Actor
-    
-    renderWindow1, renderWindowInteractor1 = create_window(actor1)
-    
     ren.AddActor(actor1)
     ren.AddActor(actor2)
-    ren.SetBackground(colors.GetColor3d('Red'))
+    ren.SetBackground(colors.GetColor3d('White'))
     
-    ren1.AddActor(actor2)
-    ren1.SetBackground(colors.GetColor3d('Blue'))
+    # ren1.AddActor(actor2)
+    # ren1.SetBackground(colors.GetColor3d('Blue'))
     
-    ren.AddActor(axes)
-    ren1.AddActor(axes)
-    
-    
-    renderWindow1, renderWindowInteractor1 = create_window(actor1)
+    # ren.AddActor(axes)
+    # ren1.AddActor(axes)
 
     iren.Initialize()
     # iren1.Initialize()
     
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
-    # cam_orient_manipulator.SetParentRenderer(ren1)
     # Enable the widget.
     cam_orient_manipulator.On()
     
@@ -246,12 +204,10 @@ def main():
     
     
     renWin.Render()
-    # renWin1.Render()
     iren.Start()
-    # iren1.Start()
-    
     
 
 if __name__ == '__main__':
     
     main()
+
