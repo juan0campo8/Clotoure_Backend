@@ -2,6 +2,8 @@
 
 # Usage: python MapToModel.py ./res/IMAGE.jpg ./obj/MODEL.obj
 
+# Updated Usage: python MapToModel.py image_front.jpg image_back.jpg model_front.obj model_back.obj
+
 import vtk
 from PIL import Image
 # noinspection PyUnresolvedReferences
@@ -50,14 +52,14 @@ def get_program_parameters():
     parser = argparse.ArgumentParser(description=description, epilog=epilogue, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('filename1', help='shirtfront.jpg.')
     parser.add_argument('filename2', help='shirtback.jpg')
-    parser.add_argument('filename3', help='tshirt.obj')
-    parser.add_argument('filename4', help='tshirt.obj')
+    # parser.add_argument('filename3', help='tshirt.obj') # Commented out, keeping the same shirt model
+    # parser.add_argument('filename4', help='tshirt.obj') # Commented out, keeping the same shirt model
     args = parser.parse_args()
     arg1 = args.filename1
     arg2 = args.filename2
-    arg3 = args.filename3
-    arg4 = args.filename4
-    return args.filename1, args.filename2, args.filename3, args.filename4
+    # arg3 = args.filename3
+    # arg4 = args.filename4 
+    return args.filename1, args.filename2#, args.filename3, args.filename4
     # takes in jpg file and obj file IN THAT ORDER
         
 def create_window(actor):
@@ -77,7 +79,7 @@ def create_window(actor):
 
 def main():
     colors = vtkNamedColors()
-    jpegfile, jpegfile2, objfile, objfile1 = get_program_parameters()
+    jpegfile, jpegfile2 = get_program_parameters() #objfile, objfile1 ## Additional param
     
     mtlfile = "tshirt.mtl"
     # back_jpeg = get_program_parameters() ##implement 2nd texture reading 
@@ -88,9 +90,29 @@ def main():
     
     jpegfile = "./res/" + jpegfile
     jpegfile2 = "./res/" + jpegfile2
-    objfile = "./obj/" + objfile
-    mtlfile = "./mtl/" + mtlfile
-    objfile1 = "./obj/" + objfile1
+    
+    # choice = input("1. Shirt or 2. pants?")
+    
+    # objfile = ""
+    # objfile1 = ""
+    
+    objfile = "./obj/splitfront.obj"
+    objfile1 = "./obj/splitback.obj"
+    
+    """
+    if choice == 1:
+        objfile = "./obj/splitfront.obj"
+        objfile1 = "./obj/splitback.obj"
+    elif choice == 2:
+        objfile = "./obj/pantsFront.obj"
+        objfile1 = "./obj/pantsBack.obj"
+    """
+    # objfile = "./obj/" + objfile #Single model
+    # mtlfile = "./mtl/" + mtlfile
+    # objfile1 = "./obj/" + objfile1 
+    
+    frontFile = "./obj/splitfront.obj"
+    backFile = "./obj/splitback.obj"
     
     # Create a render window
     ren = vtkRenderer()
@@ -115,7 +137,7 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkPNGReader()
+    reader = vtkJPEGReader()
     reader.SetFileName(jpegfile)
     
     reader2 = vtkJPEGReader()
@@ -125,17 +147,17 @@ def main():
     
     #read front of obj
     objreader = vtkOBJReader()
-    objreader.SetFileName(objfile)
+    objreader.SetFileName(objfile) #objfile
     
     #read back of obj
     objreader1 = vtkOBJReader()
-    objreader1.SetFileName(objfile1)
+    objreader1.SetFileName(objfile1) #objfile1
     
     # import obj and mtl file
     
-    importer = vtk.vtkOBJImporter()
-    importer.SetFileName(objfile)
-    importer.SetFileName(objfile)
+    # importer = vtk.vtkOBJImporter()
+    # importer.SetFileName(objfile)
+    # importer.SetFileName(objfile)
 
     # Create texture object
     texture = vtkTexture()
