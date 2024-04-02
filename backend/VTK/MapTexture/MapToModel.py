@@ -115,7 +115,7 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
     reader2 = vtkJPEGReader()
