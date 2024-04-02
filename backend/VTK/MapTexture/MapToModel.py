@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 # Usage: python MapToModel.py ./res/IMAGE.jpg ./obj/MODEL.obj
+
+# Updated Usage: python MapToModel.py image_front.jpg image_back.jpg model_front.obj model_back.obj
+
+import vtk
 from PIL import Image
 # noinspection PyUnresolvedReferences
 import vtkmodules.vtkInteractionStyle
@@ -16,6 +20,7 @@ from vtkmodules.vtkIOGeometry import vtkOBJReader
 from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
+
 
 from vtkmodules.vtkFiltersCore import (
     vtkPolyDataTangents,
@@ -47,12 +52,14 @@ def get_program_parameters():
     parser = argparse.ArgumentParser(description=description, epilog=epilogue, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('filename1', help='shirtfront.jpg.')
     parser.add_argument('filename2', help='shirtback.jpg')
-    parser.add_argument('filename3', help='tshirt.obj')
+    # parser.add_argument('filename3', help='tshirt.obj') # Commented out, keeping the same shirt model
+    # parser.add_argument('filename4', help='tshirt.obj') # Commented out, keeping the same shirt model
     args = parser.parse_args()
     arg1 = args.filename1
     arg2 = args.filename2
-    arg3 = args.filename3
-    return args.filename1, args.filename2, args.filename3
+    # arg3 = args.filename3
+    # arg4 = args.filename4 
+    return args.filename1, args.filename2#, args.filename3, args.filename4
     # takes in jpg file and obj file IN THAT ORDER
         
 def create_window(actor):
@@ -72,8 +79,9 @@ def create_window(actor):
 
 def main():
     colors = vtkNamedColors()
-    jpegfile, jpegfile2, objfile = get_program_parameters()
+    jpegfile, jpegfile2 = get_program_parameters() #objfile, objfile1 ## Additional param
     
+    mtlfile = "tshirt.mtl"
     # back_jpeg = get_program_parameters() ##implement 2nd texture reading 
     
     #jpegfile  = "./res/8k_earth_daymap.jpg"
@@ -82,7 +90,29 @@ def main():
     
     jpegfile = "./res/" + jpegfile
     jpegfile2 = "./res/" + jpegfile2
-    objfile = "./obj/" + objfile
+    
+    # choice = input("1. Shirt or 2. pants?")
+    
+    # objfile = ""
+    # objfile1 = ""
+    
+    objfile = "./obj/splitfront.obj"
+    objfile1 = "./obj/splitback.obj"
+    
+    """
+    if choice == 1:
+        objfile = "./obj/splitfront.obj"
+        objfile1 = "./obj/splitback.obj"
+    elif choice == 2:
+        objfile = "./obj/pantsFront.obj"
+        objfile1 = "./obj/pantsBack.obj"
+    """
+    # objfile = "./obj/" + objfile #Single model
+    # mtlfile = "./mtl/" + mtlfile
+    # objfile1 = "./obj/" + objfile1 
+    
+    frontFile = "./obj/splitfront.obj"
+    backFile = "./obj/splitback.obj"
     
     # Create a render window
     ren = vtkRenderer()
@@ -114,8 +144,20 @@ def main():
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
+    
+    #read front of obj
     objreader = vtkOBJReader()
-    objreader.SetFileName(objfile)
+    objreader.SetFileName(objfile) #objfile
+    
+    #read back of obj
+    objreader1 = vtkOBJReader()
+    objreader1.SetFileName(objfile1) #objfile1
+    
+    # import obj and mtl file
+    
+    # importer = vtk.vtkOBJImporter()
+    # importer.SetFileName(objfile)
+    # importer.SetFileName(objfile)
 
     # Create texture object
     texture = vtkTexture()
@@ -129,15 +171,18 @@ def main():
     # Map texture coordinates
     
     map_to_model = vtkTextureMapToPlane()   #Plane texture map is good
+    map_to_model2 = vtkTextureMapToPlane()
     # UV Bias for shifting image in various directions
 
     map_to_model.SetInputConnection(objreader.GetOutputPort())
+    map_to_model2.SetInputConnection(objreader1.GetOutputPort())
     # map_to_model.PreventSeamOn()
 
     # Create mapper and set the mapped texture as input
     mapper = vtkPolyDataMapper()
+    mapper2 = vtkPolyDataMapper()
     mapper.SetInputConnection(map_to_model.GetOutputPort())
-
+    mapper2.SetInputConnection(map_to_model2.GetOutputPort())
     # Create actor and set the mapper and the texture
     
     bp = vtkProperty()
@@ -150,7 +195,7 @@ def main():
     
     # Create second actor
     actor2 = vtkActor()
-    actor2.SetMapper(mapper)
+    actor2.SetMapper(mapper2)
     
     
     #Axes
@@ -166,8 +211,11 @@ def main():
     actor2.SetTexture(texture2)
     actor2.SetBackfaceProperty(bp)
     
-    actor1.SetPosition(0,0,5)
-    actor2.SetPosition(0,0,-0.5)
+    actor1.SetPosition(0,0,0)
+    actor2.SetPosition(0,0,0)
+    #actor1.SetPosition(0,0,5)
+    #actor2.SetPosition(0,0,-0.5)
+    
     # actor2.RotateY(180) ## Rotate Actor
     
     renderWindow1, renderWindowInteractor1 = create_window(actor1)
