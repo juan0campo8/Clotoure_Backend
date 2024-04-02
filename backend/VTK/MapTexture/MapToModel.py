@@ -108,10 +108,10 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkJPEGReader()
+    reader2 = vtkPNGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
@@ -156,7 +156,7 @@ def main():
     # Create actor and set the mapper and the texture
     
     bp = vtkProperty()
-    bp.SetColor(colors.GetColor3d('Blue'))
+    bp.SetColor(colors.GetColor3d('White'))
    
     # Create first actor
     actor1 = vtkActor()
@@ -171,7 +171,6 @@ def main():
 
     texture.SetWrap(vtkTexture.ClampToEdge)
 
-
     actor1.SetTexture(texture)
     actor1.SetBackfaceProperty(bp)
     
@@ -185,7 +184,7 @@ def main():
     
     ren.AddActor(actor1)
     ren.AddActor(actor2)
-    ren.SetBackground(colors.GetColor3d('Red'))
+    ren.SetBackground(colors.GetColor3d('White'))
     
     # ren1.AddActor(actor2)
     # ren1.SetBackground(colors.GetColor3d('Blue'))
