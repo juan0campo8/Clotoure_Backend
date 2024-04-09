@@ -75,8 +75,8 @@ def main():
     
 
     # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
-    jpegfile = "./readfrom/01.jpg" #+ jpegfile
-    jpegfile2 = "./readfrom/02.jpg" #+ jpegfile2
+    jpegfile = "./readfrom/front.jpg" #+ jpegfile
+    jpegfile2 = "./readfrom/back.jpg" #+ jpegfile2
     
     choice = input("1. Shirt or 2. pants?")
     if choice == "1":
