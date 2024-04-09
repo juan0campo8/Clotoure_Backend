@@ -65,7 +65,7 @@ def get_program_parameters():
 
 def main():
     colors = vtkNamedColors()
-    jpegfile, jpegfile2 = get_program_parameters() #objfile, objfile1 ## Additional param
+    # jpegfile, jpegfile2 = get_program_parameters() #objfile, objfile1 ## Additional param
     
     mtlfile = "tshirt.mtl"
     # back_jpeg = get_program_parameters() ##implement 2nd texture reading 
@@ -74,8 +74,10 @@ def main():
     #jpegfile2 = "./res/BackShirt.jpg"
     #objfile   = "./obj/tshirt.obj"
     
-    jpegfile = "./res/" + jpegfile
-    jpegfile2 = "./res/" + jpegfile2
+
+    # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
+    jpegfile = "./readfrom/02.jpg" #+ jpegfile
+    jpegfile2 = "./readfrom/02.jpg" #+ jpegfile2
     
     choice = input("1. Shirt or 2. pants?")
     if choice == "1":
@@ -108,10 +110,10 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkPNGReader()
+    reader = vtkJPEGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkPNGReader()
+    reader2 = vtkJPEGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
