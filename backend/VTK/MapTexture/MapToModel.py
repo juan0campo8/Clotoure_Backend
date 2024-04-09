@@ -124,7 +124,6 @@ def main():
     #read back of obj
     objreader1 = vtkOBJReader()
     objreader1.SetFileName(objfile1) #objfile1
-    
 
     # Create texture object
     texture = vtkTexture()
@@ -174,7 +173,13 @@ def main():
     actor2.SetBackfaceProperty(bp)
     
     actor1.SetPosition(0,0,0)
+    #actor1.RotateZ(0)
+    #actor1.RotateX(90)
+    #actor1.RotateY(0)
     actor2.SetPosition(0,0,0)
+    #actor2.RotateZ(0)
+    #actor2.RotateX(90)
+    #actor2.RotateY(0)
     #actor1.SetPosition(0,0,5)
     #actor2.SetPosition(0,0,-0.5)
     
@@ -191,6 +196,11 @@ def main():
     iren.Initialize()
     # iren1.Initialize()
     
+    # camera = ren.GetActiveCamera()
+    # camera.SetPosition(0, 100, 0)  # Set camera position
+    # camera.SetFocalPoint(0, 0, 0)  # Set focal point
+    # camera.SetViewUp(0, 0, 1)  # Set view up vector
+        
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
     # Enable the widget.
