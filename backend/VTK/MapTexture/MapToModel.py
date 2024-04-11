@@ -78,14 +78,19 @@ def main():
     jpegfile = "./readfrom/front.jpg" #+ jpegfile
     jpegfile2 = "./readfrom/back.jpg" #+ jpegfile2
     
-    choice = input("1. Shirt or 2. pants?")
-    if choice == "1":
-        objfile = "./obj/splitfront.obj"
-        objfile1 = "./obj/splitback.obj"
-    if choice == "2":
-        objfile = "./obj/pantsfront.obj"
-        objfile1 = "./obj/pantsback.obj"
+    frontModel = "front.obj"
+    backModel = "back.obj"
     
+    choice = input("1. Shirt or 2. pants? or 3. dress shirt (Long Sleeve)")
+    if choice == "1":
+        objfile = "./obj/TShirt/splitfront.obj"
+        objfile1 = "./obj/TShirt/splitback.obj"
+    if choice == "2":
+        objfile = "./obj/Pants/pantsfront.obj"
+        objfile1 = "./obj/Pants/pantsback.obj"
+    if choice == "3":
+        objfile = "./obj/DressShirt/frontDress.obj"
+        objfile1 = "./obj/DressShirt/backDress.obj"
     # objfile = ""
     # objfile1 = ""
     
