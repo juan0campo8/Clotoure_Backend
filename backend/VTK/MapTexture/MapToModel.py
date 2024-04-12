@@ -4,34 +4,16 @@
 
 # Updated Usage: python MapToModel.py image_front.jpg image_back.jpg
 
-import vtk
 from PIL import Image
-# noinspection PyUnresolvedReferences
-import vtkmodules.vtkInteractionStyle
 # noinspection PyUnresolvedReferences
 import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToCylinder
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkIOImage import vtkJPEGReader
 from vtkmodules.vtkIOImage import vtkPNGReader
 from vtkmodules.vtkIOGeometry import vtkOBJReader
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
-
-
-from vtkmodules.vtkFiltersCore import (
-    vtkPolyDataTangents,
-    vtkTriangleFilter
-)
-
-from vtkmodules.vtkFiltersSources import (
-    vtkCubeSource,
-    vtkParametricFunctionSource,
-    vtkTexturedSphereSource
-)
 
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
