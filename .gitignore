@@ -1,2 +1,4 @@
 # ignore models
 *.pth
+*.yaml
+*.onnx

@@ -4,9 +4,11 @@ import threading
 import datetime
 import json
 from werkzeug.utils import secure_filename
-from werkzeug.datastructures import  FileStorage
+from werkzeug.datastructures import FileStorage
 from flask import Flask, request
 from SAM import SAM_functions as sam
+from COS import COS_functions as cos
+import io
 
 
 sys.path.append("SAM/SAM_functions.py")
@@ -22,45 +24,65 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def create_filename(file, tag):
+    return file.filename.rsplit('.', 1)[0] + tag + '.' + file.filename.rsplit('.', 1)[1].lower()
+
+def bytes_file(file):
+    f = io.BytesIO()
+    f.write(file)
+    f.seek(0)
+    return f
+
 @app.route("/")
 def hello_world():
     return "Hello world"
 
 @app.route("/segment", methods = ['POST'])
 def segment_image():
-    print("Pinged")
-    print(os.getcwd())
     '''
     file = request.files['file']
     filename = secure_filename(file.filename)
     file.save(os.path.join(app.config['upload_folder'], filename))
     '''    
     try:
-        if 'file' not in request.files:
-            print('No file part')
-            return "No file uploaded"
-        file = request.files['file']
-        if file.filename == '':
+        if 'front' and 'back' not in request.files:
+            print('Missing file')
+            return "Missing file"
+        front = request.files['front']
+        back = request.files['back']
+        if front.filename == '' or back.filename == '':
             print('No selected file')
             return "No selected file"
             # If the user does not select a file, the browser submits an
             # empty file without a filename.
-        if file and allowed_file(file.filename):
-            # Add a unique tag to the file
-            tag = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        if (front and allowed_file(front.filename) and (back and allowed_file(back.filename))):
+            data = request.form['data']
+            DATA = json.loads(data)
+            CLOTHING_NAME = DATA['clothing_name']
+            ffn = front.filename
+            bfn = back.filename
             
-            #f = file.filename.rsplit('.', 1)[0] + tag
-            fn = file.filename.rsplit('.', 1)[0] + tag + '.' + file.filename.rsplit('.', 1)[1].lower()
-            filename = secure_filename(file.filename)
+            tag = str(datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+            CLOTHING_NAME = CLOTHING_NAME + '_' + tag
+            front = front.stream.read()
+            back = back.stream.read()
+            print("Files read")
+            #cos.upload_to_folder(CLOTHING_NAME, ffn, 'clotoure', front)
+            #cos.upload_to_folder(CLOTHING_NAME, bfn, 'clotoure', back)
+            
+            '''filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            t1 = threading.Thread(target=sam.generate_image, args=(filepath, fn, ))
+            file.save(filepath)'''
+            # Modify the function for 2 files
+            # Spawn 2 threads (front and back)
+            # Pass on S3 info (bucket, directory)
+            t1 = threading.Thread(target=sam.generate_image, args=(CLOTHING_NAME, bytes_file(front), bytes_file(back) ))
             t1.start()
             # Return a dictionary with the filename + unique tag for future accessibility
             # Add the directory name to the output
             output = {
                 'started': True,
-                'filetag': tag
+                'filetag': CLOTHING_NAME
                 }
             
             return json.dumps(output)
@@ -74,3 +96,97 @@ def segment_image():
 }
 '''
 # 
+
+@app.route("/mult", methods=["POST"])
+def man():
+    try:
+        if 'file' not in request.files:
+            print('No file part')
+            return "No file uploaded"
+        file = request.files['file']
+        print(file.filename)
+        data = request.form['data']
+        DATA = json.loads(data)
+        print(DATA)
+        return json.loads(data)
+    except Exception as e:
+        return str(e)
+
+#'''
+    
+@app.route("/fandb", methods=["POST"])
+def fandb():
+    try:
+        if 'front' and 'back' not in request.files:
+            print('Missing file')
+            return "Missing file"
+        front = request.files['front']
+        back = request.files['back']
+        if front.filename == '' or back.filename == '':
+            print('No selected file')
+            return "No selected file"
+            # If the user does not select a file, the browser submits an
+            # empty file without a filename.
+        if (front and allowed_file(front.filename) and (back and allowed_file(back.filename))):
+            data = request.form['data']
+            DATA = json.loads(data)
+            CLOTHING_NAME = DATA['clothing_name']
+            ffn = front.filename
+            bfn = back.filename
+            
+            tag = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            CLOTHING_NAME = CLOTHING_NAME + '_' + str(tag)
+            front = front.stream.read()
+            back = back.stream.read()
+            #cos.upload_to_folder(CLOTHING_NAME, ffn, 'clotoure', front)
+            #cos.upload_to_folder(CLOTHING_NAME, bfn, 'clotoure', back)
+            
+
+            return('good')
+    except Exception as e:
+        return str(e)
+
+#'''
+
+
+@app.route("/segment/manual", methods=["POST"])
+def manual_segmentation():
+    try:
+        if 'file' not in request.files:
+            print('No file part')
+            return "No file uploaded"
+        file = request.files['file']
+        if file.filename == '':
+            print('No selected file')
+            return "No selected file"
+            # If the user does not select a file, the browser submits an
+            # empty file without a filename.
+        if file and allowed_file(file.filename):
+            data = request.form['data']
+            DATA = json.loads(data)
+            INPUT_POINTS = DATA['input_points']
+            INPUT_LABEL = DATA['input_label']
+            INPUT_BOX = DATA['input_box']
+            print("all good")
+
+            tag = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            
+            #f = file.filename.rsplit('.', 1)[0] + tag
+            fn = file.filename.rsplit('.', 1)[0] + tag + '.' + file.filename.rsplit('.', 1)[1].lower()
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)     
+
+            t1 = threading.Thread(target=sam.generate_manual_mask, args=(filepath, fn, INPUT_POINTS, INPUT_LABEL, INPUT_BOX, ))
+
+            t1.start()
+            # Return a dictionary with the filename + unique tag for future accessibility
+            # Add the directory name to the output
+            output = {
+                'started': True,
+                'filetag': tag
+                }
+            return(output)
+    except Exception as e:
+        return str(e)
+#'''

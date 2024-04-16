@@ -4,16 +4,22 @@ import matplotlib.pyplot as plt
 import cv2
 import sys
 import json
+import io
 import os
 import datetime as time
 from PIL import Image as im
 sys.path.append("..")
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
+from COS import COS_functions as cos
 
 
 def print_func():
     return "success"
-    
+
+def bytes_file(file):
+    f = io.BytesIO()
+    f.write(file)
+    f.seek(0)    
 
 def apply_mask_to_image(original_image, mask):
     """
@@ -31,10 +37,13 @@ def apply_mask_to_image(original_image, mask):
     # Apply mask
     original_image_rgba[~mask_bool] = (0, 0, 0, 0)  # Set unmasked area to transparent
     
+    print(type(original_image_rgba))
+
     return original_image_rgba
 
-def generate_image(ifile, fn):
-    try:    
+def generate_image(folder, frnt, bck):
+    try:
+        '''    
         name = fn.rsplit('.', 1)[0]
         cwd = os.getcwd() 
         print(cwd)
@@ -42,11 +51,19 @@ def generate_image(ifile, fn):
         print(path)
         os.mkdir(path)
         print(ifile)
-        image = cv2.imread(ifile)
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        '''
+        print(type(frnt))
+
+        front = cv2.imdecode(np.asarray(bytearray(frnt.read()), dtype=np.uint8), cv2.IMREAD_COLOR)
+        front_rgb = cv2.cvtColor(front, cv2.COLOR_BGR2RGB)
+
+        back = cv2.imdecode(np.asarray(bytearray(bck.read()), dtype=np.uint8), cv2.IMREAD_COLOR)
+        back_rgb = cv2.cvtColor(back, cv2.COLOR_BGR2RGB)
+
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         print('reading image')
-        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_h_4b8939.pth'
-        model_type = "vit_h"
+        sam_checkpoint = os.getcwd() + r'\SAM\sam_vit_b_01ec64.pth'
+        model_type = "vit_b"
 
         device = "cpu"
         # set to "cpu"
@@ -59,22 +76,51 @@ def generate_image(ifile, fn):
         print('generating masks')
         begin = time.datetime.now()
         print(begin)
-        masks = mask_generator.generate(image_rgb)  # Assume this returns a list of masks
+        print('beginning front')
+        front_masks = mask_generator.generate(front)
+        print('beginning back')
+        back_masks = mask_generator.generate(back)
 
         print('writing to file')
         end = time.datetime.now()
         print(end)
         print(end - begin)
+        
+        # updated code (Adding segmentation to the original image, allowing user to select which masks)
+        #mask_files = []
+        for x, mask in enumerate(front_masks):
+            #filename = os.path.join(path, f'mask{x}.jpg')
+            #mask_files.append(filename)
+            if mask['predicted_iou'] > 1:
+                #data = im.fromarray(mask['segmentation'])
+                #byts = io.BytesIO()
+                #data.save(byts, format="PNG")
+                #byts.seek(0)
+                #frnt.seek(0)
+                data = im.fromarray(apply_mask_to_image(front_rgb, mask['segmentation'])).convert("RGBA")
+                byts = io.BytesIO()
+                print('here')
+                data.save(byts, format="PNG")
+                byts.seek(0)
+                cos.upload_to_folder(folder, f'front_mask{x}.png', 'clotoure', byts)
 
-        composite_images_paths = []
-        for x, mask in enumerate(masks):
-            mask_applied_image = apply_mask_to_image(image_rgb, mask['segmentation'])
-            composite_image_path = os.path.join(path, f'composite{x}.png')
-            im.fromarray(mask_applied_image).save(composite_image_path)
-            composite_images_paths.append(composite_image_path)
+        for x, mask in enumerate(back_masks):
+            #filename = os.path.join(path, f'mask{x}.jpg')
+            #mask_files.append(filename)
+            if mask['predicted_iou'] > 1:
+                '''data = im.fromarray(mask['segmentation'])
+                byts = io.BytesIO()
+                data.save(byts, format="PNG")
+                byts.seek(0)''' 
+                data = im.fromarray(apply_mask_to_image(back_rgb, mask['segmentation'])).convert("RGBA")
+                byts = io.BytesIO()
+                print('here')
+                data.save(byts, format="PNG")
+                byts.seek(0)
+                cos.upload_to_folder(folder, f'back_mask{x}.png', 'clotoure', byts)
             
         # List the composite images for the user to select
-        print("Available Masks:")
+        '''print("Available Masks:")
         for idx, composite_path in enumerate(composite_images_paths):
             print(f'{idx}: {composite_path.split(os.sep)[-1]}')
 
@@ -86,11 +132,10 @@ def generate_image(ifile, fn):
 
         # Combine selected composite images into one and save it
         combine_selected_composites(selected_composite_paths, path)  # 'path' is the directory where you've been saving everything
-
+        '''
     except Exception as e:
         print(str(e))
-        if os.path.exists(ifile):
-            os.remove(ifile)
+        
 
 def find_bounding_box(image):
     """
@@ -132,6 +177,8 @@ def combine_selected_composites(selected_paths, output_path):
             base_image = composite_image
         else:
             base_image = im.alpha_composite(base_image, composite_image)
+    
+    base_image = im.open()
 
     # Find the bounding box of non-transparent pixels
     bbox = find_bounding_box(base_image)
