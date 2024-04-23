@@ -5,6 +5,7 @@ import datetime
 import json
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
+#from werkzeug import FileWrapper
 from flask import Flask, request
 from SAM import SAM_functions as sam
 from COS import COS_functions as cos
@@ -189,4 +190,15 @@ def manual_segmentation():
             return(output)
     except Exception as e:
         return str(e)
+    
+@app.route("/getmask", methods=["POST"])
+def get_masks():
+    data = request.form['data']
+    DATA = json.loads(data)
+    FOLDER = DATA['folder']
+    BUCKEt = 'clotoure'
+    masks = FileWrapper(cos.download_file_bytes(FOLDER))
+    
+
+
 #'''

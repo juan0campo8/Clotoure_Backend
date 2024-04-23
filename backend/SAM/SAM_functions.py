@@ -21,6 +21,14 @@ def bytes_file(file):
     f.write(file)
     f.seek(0)    
 
+def to_bucket(rgb, mask, folder, typ):
+    data = im.fromarray(apply_mask_to_image(rgb, mask)).convert("RGBA")
+    byts = io.BytesIO()
+            
+    data.save(byts, format="PNG")
+    byts.seek(0)
+    cos.upload_to_folder(folder, f'{typ}_mask.png', 'clotoure', byts)
+
 def apply_mask_to_image(original_image, mask):
     """
     Apply a mask to the original image, making the masked area visible and the rest transparent.
@@ -88,36 +96,34 @@ def generate_image(folder, frnt, bck):
         
         # updated code (Adding segmentation to the original image, allowing user to select which masks)
         #mask_files = []
+        score = 0
+        final_front = None
         for x, mask in enumerate(front_masks):
             #filename = os.path.join(path, f'mask{x}.jpg')
             #mask_files.append(filename)
-            if mask['predicted_iou'] > 1:
-                #data = im.fromarray(mask['segmentation'])
-                #byts = io.BytesIO()
-                #data.save(byts, format="PNG")
-                #byts.seek(0)
-                #frnt.seek(0)
-                data = im.fromarray(apply_mask_to_image(front_rgb, mask['segmentation'])).convert("RGBA")
-                byts = io.BytesIO()
-                print('here')
-                data.save(byts, format="PNG")
-                byts.seek(0)
-                cos.upload_to_folder(folder, f'front_mask{x}.png', 'clotoure', byts)
+            if score == 0:
+                score = mask['predicted_iou']
+                final_front = mask['segmentation']
+            if mask['predicted_iou'] > score:
+                final_front = mask['segmentation']
+
+
+        to_bucket(front_rgb, final_front, folder, "front")
+
+        score = 0
+        final_back = None
 
         for x, mask in enumerate(back_masks):
             #filename = os.path.join(path, f'mask{x}.jpg')
             #mask_files.append(filename)
-            if mask['predicted_iou'] > 1:
-                '''data = im.fromarray(mask['segmentation'])
-                byts = io.BytesIO()
-                data.save(byts, format="PNG")
-                byts.seek(0)''' 
-                data = im.fromarray(apply_mask_to_image(back_rgb, mask['segmentation'])).convert("RGBA")
-                byts = io.BytesIO()
-                print('here')
-                data.save(byts, format="PNG")
-                byts.seek(0)
-                cos.upload_to_folder(folder, f'back_mask{x}.png', 'clotoure', byts)
+            #mask_files.append(filename)
+            if score == 0:
+                score = mask['predicted_iou']
+                final_back = mask['segmentation']
+            if mask['predicted_iou'] > score:
+                final_back = mask['segmentation']
+
+        to_bucket(back_rgb, final_back, folder, "back")
             
         # List the composite images for the user to select
         '''print("Available Masks:")
