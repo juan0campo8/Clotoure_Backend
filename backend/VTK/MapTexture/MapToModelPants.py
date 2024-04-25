@@ -56,8 +56,8 @@ def main():
     #objfile   = "./obj/tshirt.obj"
 
     # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
-    jpegfile = "./readfrom3/front.jpg" #+ jpegfile
-    jpegfile2 = "./readfrom3/back.jpg" #+ jpegfile2
+    jpegfile = "./readfrom/front.png" #+ jpegfile
+    jpegfile2 = "./readfrom/back.png" #+ jpegfile2
 
     objfile = "./obj/Pants/pantsfront.obj"
     objfile1 = "./obj/Pants/pantsback.obj"
@@ -78,10 +78,10 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkJPEGReader()
+    reader2 = vtkPNGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file

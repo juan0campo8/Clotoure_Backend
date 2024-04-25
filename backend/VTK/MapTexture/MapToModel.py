@@ -57,8 +57,8 @@ def main():
     
 
     # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
-    jpegfile = "./readfrom/front.jpg" #+ jpegfile
-    jpegfile2 = "./readfrom/back.jpg" #+ jpegfile2
+    jpegfile = "./readfrom/front.png" #+ jpegfile
+    jpegfile2 = "./readfrom/back.png" #+ jpegfile2
 
     objfile = "./obj/TShirt/splitfront.obj"
     objfile1 = "./obj/TShirt/splitback.obj"
@@ -77,10 +77,10 @@ def main():
 
     # Read the image data from a file
     
-    reader = vtkJPEGReader()
+    reader = vtkPNGReader()
     reader.SetFileName(jpegfile)
     
-    reader2 = vtkJPEGReader()
+    reader2 = vtkPNGReader()
     reader2.SetFileName(jpegfile2)
     
     # read the obj data from a file
@@ -154,6 +154,7 @@ def main():
     ren.AddActor(actor1)
     ren.AddActor(actor2)
     ren.SetBackground(colors.GetColor3d('White'))
+    
     
     # ren1.AddActor(actor2)
     # ren1.SetBackground(colors.GetColor3d('Blue'))
