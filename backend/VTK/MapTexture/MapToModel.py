@@ -57,8 +57,8 @@ def main():
     
 
     # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
-    jpegfile = "./readfrom/front.png" #+ jpegfile
-    jpegfile2 = "./readfrom/back.png" #+ jpegfile2
+    jpegfile = "./readfrom/front1.png" #+ jpegfile
+    jpegfile2 = "./readfrom/back1.png" #+ jpegfile2
 
     objfile = "./obj/TShirt/splitfront.obj"
     objfile1 = "./obj/TShirt/splitback.obj"
