@@ -1,6 +1,7 @@
 import boto3
 import io
 import yaml
+import zipfile
 
 with open("config.yaml", "r") as ymlfile:
     cfg = yaml.safe_load(ymlfile)
@@ -11,9 +12,9 @@ s3 = boto3.resource('s3',
                     aws_access_key_id=cfg["aws"]["aws_access_key_id"],
                     aws_secret_access_key= cfg["aws"]["aws_secret_access_key"])
 
-for bucket in s3.buckets.all():
+'''for bucket in s3.buckets.all():
     print(bucket.name)
-
+'''
 def upload_to_folder(folder_name, filename, bucketname, file):
 
     with open("config.yaml", "r") as ymlfile:
@@ -47,10 +48,31 @@ def download_file_bytes(folder_name):
         data = io.BytesIO()
         s3.download_fileobj(Bucket='clotoure', Key=folder_name, Fileobj=data)
         data.seek(0)
+        with zipfile.ZipFile(data, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            zip_file.writestr(folder_name, data.getvalue())
         return data
     except Exception as e:
         print(str(e))
         return e
     
+def get_bucket_items():
+    with open("config.yaml", "r") as ymlfile:
+        cfg = yaml.safe_load(ymlfile)
+
+    s3 = boto3.client('s3',
+                    aws_access_key_id=cfg["aws"]["aws_access_key_id"],
+                    aws_secret_access_key= cfg["aws"]["aws_secret_access_key"])
+    data = set({})
+
+    bucket = s3.list_objects_v2(Bucket = 'clotoure')
+
+    for item in bucket['Contents']:
+        obj = item['Key']
+        folder = obj.rsplit('/',1)[0]
+
+        data.add(folder)
+    
+    print(data)
+    return data
 
 

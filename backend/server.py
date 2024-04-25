@@ -6,7 +6,8 @@ import json
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 #from werkzeug import FileWrapper
-from flask import Flask, request
+from flask import Flask, request, send_file
+from flask_cors import CORS
 from SAM import SAM_functions as sam
 from COS import COS_functions as cos
 import io
@@ -15,6 +16,7 @@ import io
 sys.path.append("SAM/SAM_functions.py")
  
 app = Flask(__name__)
+CORS(app)
 
 UPLOAD_FOLDER = os.getcwd() + r'\images'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -191,13 +193,49 @@ def manual_segmentation():
     except Exception as e:
         return str(e)
     
-@app.route("/getmask", methods=["POST"])
+
+    
+@app.route("/get_items", methods=["GET"])
+def get_items():
+    print('hit')
+    try:
+        data = cos.get_bucket_items()
+        
+        output = {
+            'items': list(data)
+        }
+        print(output)
+        return json.dumps(output)
+        
+    except Exception as e:
+        print(e)
+        return json.dumps(str(e))
+
+@app.route("/get_image", methods=["POSt"])
+def get_image():
+    try:
+        data = request.form['data']
+        DATA = json.loads(data)
+        FOLDER = DATA['folder']
+        file = cos.download_file_bytes(FOLDER)
+        return send_file(
+        file,
+        as_attachment=True,
+        download_name= '{folder}.zip',
+        mimetype='text/csv'
+    )
+    except Exception as e:
+        print(e)
+        return(json.dumps(e))
+    
+    
+'''@app.route("/getmask", methods=["POST"])
 def get_masks():
     data = request.form['data']
     DATA = json.loads(data)
     FOLDER = DATA['folder']
     BUCKEt = 'clotoure'
-    masks = FileWrapper(cos.download_file_bytes(FOLDER))
+    #masks = FileWrapper(cos.download_file_bytes(FOLDER))'''
     
 
 
