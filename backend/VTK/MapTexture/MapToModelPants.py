@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python LONG SLEEVE
 
 # Usage: python MapToModel.py ./res/IMAGE.jpg ./obj/MODEL.obj
 
@@ -54,16 +54,17 @@ def main():
     #jpegfile  = "./res/8k_earth_daymap.jpg"
     #jpegfile2 = "./res/BackShirt.jpg"
     #objfile   = "./obj/tshirt.obj"
-    
 
     # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
-    jpegfile = "./readfrom/front.jpg" #+ jpegfile
-    jpegfile2 = "./readfrom/back.jpg" #+ jpegfile2
+    jpegfile = "./readfrom3/front.jpg" #+ jpegfile
+    jpegfile2 = "./readfrom3/back.jpg" #+ jpegfile2
 
-    objfile = "./obj/TShirt/splitfront.obj"
-    objfile1 = "./obj/TShirt/splitback.obj"
+    objfile = "./obj/Pants/pantsfront.obj"
+    objfile1 = "./obj/Pants/pantsback.obj"
     
-    
+    # objfile = ""
+    # objfile1 = ""
+ 
     # Create a render window
     ren = vtkRenderer()
     renWin = vtkRenderWindow()
