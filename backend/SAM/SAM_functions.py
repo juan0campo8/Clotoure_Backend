@@ -21,16 +21,14 @@ def bytes_file(file):
     f.write(file)
     f.seek(0)    
 
-def to_bucket(rgb, mask, folder, typ):
+def to_bucket(rgb, mask, folder, typ, path):
     data = im.fromarray(apply_mask_to_image(rgb, mask)).convert("RGBA")
     byts = io.BytesIO()
             
     data.save(byts, format="PNG")
     byts.seek(0)
 
-    cwd = os.getcwd()
-    pathway = "/VTK/MapTexture/res/" + folder + "/{typ}_mask.png"
-    path = os.path.join(cwd, pathway)
+    path = path + r'\\' + f'{typ}_mask.png'
 
     with open(path, "wb") as f:
         f.write(byts.getbuffer())
@@ -61,13 +59,14 @@ def generate_image(folder, frnt, bck):
     try:
         '''    
         name = fn.rsplit('.', 1)[0]
-        cwd = os.getcwd() 
-        print(cwd)
-        path = os.path.join(cwd, name)
-        print(path)
-        os.mkdir(path)
+        
         print(ifile)
         '''
+        cwd = os.getcwd() + r'\VTK\MapTexture\res' 
+        print(cwd)
+        
+        path = os.path.join(cwd, folder)
+        os.mkdir(path)
         
 
         front = cv2.imdecode(np.asarray(bytearray(frnt.read()), dtype=np.uint8), cv2.IMREAD_COLOR)
@@ -94,8 +93,8 @@ def generate_image(folder, frnt, bck):
         predictor.set_image(front)
         
         input_box = np.array([0,0,800,768])
-        input_point = np.array([[400, 384]])
-        input_label = np.array([1])
+        input_point = np.array([[400, 384], [400,20], [400,748]])
+        input_label = np.array([1, 0, 0])
         print('generating masks')
         begin = time.datetime.now()
         print(begin)
@@ -138,7 +137,7 @@ def generate_image(folder, frnt, bck):
                 final_front = mask['segmentation']'''
 
 
-        to_bucket(front_rgb, front_mask[0], folder, "front")
+        to_bucket(front_rgb, front_mask[0], folder, "front", path)
 
         '''score = 0
         final_back = None
@@ -153,7 +152,7 @@ def generate_image(folder, frnt, bck):
             if mask['predicted_iou'] > score:
                 final_back = mask['segmentation']
 '''
-        to_bucket(back_rgb, back_mask[0], folder, "back")
+        to_bucket(back_rgb, back_mask[0], folder, "back", path)
             
         # List the composite images for the user to select
         '''print("Available Masks:")

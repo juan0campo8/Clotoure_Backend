@@ -56,14 +56,26 @@ def main():
     #jpegfile2 = "./res/BackShirt.jpg"
     #objfile   = "./obj/tshirt.obj"
     
-
-    # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
-    jpegfile = "./readfrom/front1.png" #+ jpegfile
-    jpegfile2 = "./readfrom/back1.png" #+ jpegfile2
-
-    objfile = "./obj/TShirt/splitfront.obj"
-    objfile1 = "./obj/TShirt/splitback.obj"
+    jpegfile = "./res/" + jpegfile
+    jpegfile2 = "./res/" + jpegfile2
     
+    choice = input("1. Shirt or 2. pants?")
+    if choice == "1":
+        objfile = "./obj/splitfront.obj"
+        objfile1 = "./obj/splitback.obj"
+    if choice == "2":
+        objfile = "./obj/pantsfront.obj"
+        objfile1 = "./obj/pantsback.obj"
+    
+    # objfile = ""
+    # objfile1 = ""
+    
+    # objfile = "./obj/" + objfile #Single model
+    # mtlfile = "./mtl/" + mtlfile
+    # objfile1 = "./obj/" + objfile1 
+    
+    frontFile = "./obj/splitfront.obj"
+    backFile = "./obj/splitback.obj"
     
     # Create a render window
     ren = vtkRenderer()
