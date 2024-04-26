@@ -4,6 +4,8 @@
 
 # Updated Usage: python MapToModel.py image_front.jpg image_back.jpg
 
+
+import vtk
 from PIL import Image
 # noinspection PyUnresolvedReferences
 import vtkmodules.vtkRenderingOpenGL2
@@ -14,7 +16,6 @@ from vtkmodules.vtkIOImage import vtkPNGReader
 from vtkmodules.vtkIOGeometry import vtkOBJReader
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
-
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper,
@@ -134,6 +135,7 @@ def main():
 
     texture.SetWrap(vtkTexture.ClampToEdge)
 
+
     actor1.SetTexture(texture)
     actor1.SetBackfaceProperty(bp)
     
@@ -155,7 +157,7 @@ def main():
     ren.AddActor(actor2)
     ren.SetBackground(colors.GetColor3d('White'))
     
-    
+
     # ren1.AddActor(actor2)
     # ren1.SetBackground(colors.GetColor3d('Blue'))
     
@@ -165,11 +167,13 @@ def main():
     iren.Initialize()
     # iren1.Initialize()
     
+
     # camera = ren.GetActiveCamera()
     # camera.SetPosition(0, 100, 0)  # Set camera position
     # camera.SetFocalPoint(0, 0, 0)  # Set focal point
     # camera.SetViewUp(0, 0, 1)  # Set view up vector
         
+
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
     # Enable the widget.
