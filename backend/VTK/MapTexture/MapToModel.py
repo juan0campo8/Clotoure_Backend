@@ -4,35 +4,18 @@
 
 # Updated Usage: python MapToModel.py image_front.jpg image_back.jpg
 
+
 import vtk
 from PIL import Image
 # noinspection PyUnresolvedReferences
-import vtkmodules.vtkInteractionStyle
-# noinspection PyUnresolvedReferences
 import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere
-from vtkmodules.vtkFiltersTexture import vtkTextureMapToCylinder
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkIOImage import vtkJPEGReader
 from vtkmodules.vtkIOImage import vtkPNGReader
 from vtkmodules.vtkIOGeometry import vtkOBJReader
-from vtkmodules.vtkInteractionStyle import vtkInteractorStyleTrackballCamera
 from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
-
-
-from vtkmodules.vtkFiltersCore import (
-    vtkPolyDataTangents,
-    vtkTriangleFilter
-)
-
-from vtkmodules.vtkFiltersSources import (
-    vtkCubeSource,
-    vtkParametricFunctionSource,
-    vtkTexturedSphereSource
-)
-
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper,
@@ -65,35 +48,22 @@ def get_program_parameters():
 
 def main():
     colors = vtkNamedColors()
-    jpegfile, jpegfile2 = get_program_parameters() #objfile, objfile1 ## Additional param
+    # jpegfile, jpegfile2 = get_program_parameters() #objfile, objfile1 ## Additional param
     
-    mtlfile = "tshirt.mtl"
-    # back_jpeg = get_program_parameters() ##implement 2nd texture reading 
+    # mtlfile = "tshirt.mtl"
     
     #jpegfile  = "./res/8k_earth_daymap.jpg"
     #jpegfile2 = "./res/BackShirt.jpg"
     #objfile   = "./obj/tshirt.obj"
     
-    jpegfile = "./res/" + jpegfile
-    jpegfile2 = "./res/" + jpegfile2
+
+    # read files from /readfrom/ folder, images labeled as -> Front image: "01" Back image: "02"    
+    jpegfile = "./readfrom/front1.png" #+ jpegfile
+    jpegfile2 = "./readfrom/back1.png" #+ jpegfile2
+
+    objfile = "./obj/TShirt/splitfront.obj"
+    objfile1 = "./obj/TShirt/splitback.obj"
     
-    choice = input("1. Shirt or 2. pants?")
-    if choice == "1":
-        objfile = "./obj/splitfront.obj"
-        objfile1 = "./obj/splitback.obj"
-    if choice == "2":
-        objfile = "./obj/pantsfront.obj"
-        objfile1 = "./obj/pantsback.obj"
-    
-    # objfile = ""
-    # objfile1 = ""
-    
-    # objfile = "./obj/" + objfile #Single model
-    # mtlfile = "./mtl/" + mtlfile
-    # objfile1 = "./obj/" + objfile1 
-    
-    frontFile = "./obj/splitfront.obj"
-    backFile = "./obj/splitback.obj"
     
     # Create a render window
     ren = vtkRenderer()
@@ -123,12 +93,6 @@ def main():
     #read back of obj
     objreader1 = vtkOBJReader()
     objreader1.SetFileName(objfile1) #objfile1
-    
-    # import obj and mtl file
-    
-    # importer = vtk.vtkOBJImporter()
-    # importer.SetFileName(objfile)
-    # importer.SetFileName(objfile)
 
     # Create texture object
     texture = vtkTexture()
@@ -171,6 +135,7 @@ def main():
 
     texture.SetWrap(vtkTexture.ClampToEdge)
 
+
     actor1.SetTexture(texture)
     actor1.SetBackfaceProperty(bp)
     
@@ -178,7 +143,13 @@ def main():
     actor2.SetBackfaceProperty(bp)
     
     actor1.SetPosition(0,0,0)
+    #actor1.RotateZ(0)
+    #actor1.RotateX(90)
+    #actor1.RotateY(0)
     actor2.SetPosition(0,0,0)
+    #actor2.RotateZ(0)
+    #actor2.RotateX(90)
+    #actor2.RotateY(0)
     #actor1.SetPosition(0,0,5)
     #actor2.SetPosition(0,0,-0.5)
     
@@ -186,6 +157,7 @@ def main():
     ren.AddActor(actor2)
     ren.SetBackground(colors.GetColor3d('White'))
     
+
     # ren1.AddActor(actor2)
     # ren1.SetBackground(colors.GetColor3d('Blue'))
     
@@ -195,6 +167,13 @@ def main():
     iren.Initialize()
     # iren1.Initialize()
     
+
+    # camera = ren.GetActiveCamera()
+    # camera.SetPosition(0, 100, 0)  # Set camera position
+    # camera.SetFocalPoint(0, 0, 0)  # Set focal point
+    # camera.SetViewUp(0, 0, 1)  # Set view up vector
+        
+
     cam_orient_manipulator = vtkCameraOrientationWidget()
     cam_orient_manipulator.SetParentRenderer(ren)
     # Enable the widget.
